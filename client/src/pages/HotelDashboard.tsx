@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrivalsTable } from "@/components/ArrivalsTable";
 import { GuestCard } from "@/components/GuestCard";
+import { AddTabletGuide } from "@/components/AddTabletGuide";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -200,6 +201,7 @@ export default function HotelDashboard() {
                 <Search className="h-4 w-4" />
                 Search Contracts
               </Button>
+              <AddTabletGuide />
               <Button
                 data-testid="button-export"
                 variant="outline"
