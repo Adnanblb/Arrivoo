@@ -162,3 +162,35 @@ Preferred communication style: Simple, everyday language.
 - Login notification emails sent on every successful login with device/IP/timestamp details
 - Comprehensive login history tracking with device info, IP addresses, and session management
 - Session invalidation on logout properly removes sessions from both memory and database
+
+**WebSocket & Real-time Communication**
+- Custom WebSocket hook (`useWebSocket`) for bidirectional server-client communication
+- Automatic reconnection with 3-second backoff on connection loss
+- Stable connection lifecycle using ref-based callback storage to prevent infinite reconnection loops
+- Used for tablet registration and real-time device management
+- WebSocket endpoint: `/ws` (ws:// for development, wss:// for production)
+
+### Tablet Management System
+
+**Device Registration** (`/tablet/register`)
+- Tablets can self-register without authentication
+- Each tablet gets a unique device ID stored in localStorage
+- Device metadata captured: browser, OS, screen size
+- WebSocket-based registration confirms device connectivity
+- Once registered, tablets can receive "Send to Tablet" requests for digital signatures
+- Device status tracked: online/offline, last connected timestamp
+
+**Tablet Signature View** (`/tablet/signature`)
+- Dedicated view for tablets to display guest registration cards
+- Real-time updates via WebSocket when staff sends a guest for signature
+- Digital signature capture using react-signature-canvas
+- Auto-submits signed contract back to server
+- Clean, minimal interface optimized for iPad/tablet devices
+
+## Recent Fixes & Updates
+
+### October 2025
+- **Fixed WebSocket Infinite Reconnection Loop:** Resolved critical bug where WebSocket connections were recreating hundreds of times per second, causing the Register Device button to be permanently disabled. Solution involved using React refs to store callbacks and prevent dependency chain recreation in the `useWebSocket` hook.
+- **OTP System Disabled:** Direct email/password authentication now active. OTP infrastructure preserved for future reactivation.
+- **Session Persistence Fix:** Sessions now properly saved to PostgreSQL before response using `req.session.save()` callback.
+- **Case-Insensitive Login:** Email lookup uses SQL `LOWER()` function for case-insensitive matching.
