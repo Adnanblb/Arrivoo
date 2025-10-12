@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,6 +35,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
+  const [, setLocation] = useLocation();
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -50,7 +52,12 @@ export default function Login() {
     // TODO: Implement real authentication
     setTimeout(() => {
       setIsLoading(false);
-      alert(`Login as ${data.role}: ${data.email}`);
+      // Navigate to the appropriate dashboard based on role
+      if (data.role === "admin") {
+        setLocation("/admin");
+      } else {
+        setLocation("/hotel");
+      }
     }, 1000);
   };
 
