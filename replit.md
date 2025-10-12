@@ -34,6 +34,15 @@ This is a professional hotel check-in platform designed to streamline guest regi
 - Sync runs automatically on server startup for immediate data availability
 - API endpoint provides access to synced arrivals for each hotel
 
+### 5. Customizable Contract Terms
+- Hotel staff can customize registration agreement terms in Hotel Settings
+- Live preview shows how terms will appear to guests
+- Default professional template provided, with option to customize or reset
+- Custom terms automatically apply to all guest check-ins (web and tablet)
+- Terms displayed before digital signature capture for guest acknowledgment
+- Scrollable terms display preserves formatting and ensures full readability
+- Changes saved per hotel and persist across all check-in flows
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -92,6 +101,7 @@ Preferred communication style: Simple, everyday language.
   - `/api/contracts/:id/pdf` - PDF generation and download for signed contracts
   - `/api/arrivals/:hotelId` - Retrieve synced arrivals for a hotel (defaults to today)
   - `/api/hotels` - Hotel management
+  - `/api/hotels/:id/contract-terms` - Update hotel-specific contract terms
   - `/api/pms-config` - PMS configuration management
 - Centralized route registration through `registerRoutes` function
 - Zod schema validation for all request bodies
