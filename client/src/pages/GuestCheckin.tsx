@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
 import { SignaturePad } from "@/components/SignaturePad";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Building2 } from "lucide-react";
+import { CheckCircle2, Building2, ScrollText } from "lucide-react";
+import type { Hotel } from "@shared/schema";
 
 const checkinSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
@@ -36,9 +38,59 @@ const checkinSchema = z.object({
 
 type CheckinForm = z.infer<typeof checkinSchema>;
 
+const defaultContractTerms = `REGISTRATION AGREEMENT
+
+By signing this registration form, the guest acknowledges and agrees to the following terms and conditions:
+
+1. CHECK-IN / CHECK-OUT
+   - Check-in time: 3:00 PM
+   - Check-out time: 11:00 AM
+   - Early check-in or late check-out may be available upon request and subject to availability
+
+2. PAYMENT TERMS
+   - All charges must be settled at check-out unless other arrangements have been made
+   - The guest is responsible for all charges incurred during their stay
+   - A valid credit card or deposit may be required to cover incidental charges
+
+3. CANCELLATION POLICY
+   - Cancellations must be made 24 hours prior to arrival to avoid charges
+   - No-shows will be charged the full amount of the reservation
+
+4. GUEST RESPONSIBILITIES
+   - Guests are responsible for any damage to hotel property during their stay
+   - Smoking is prohibited in all guest rooms and indoor areas
+   - Guests must comply with all hotel policies and local regulations
+
+5. LIABILITY
+   - The hotel is not responsible for loss or damage to personal property
+   - Guests should use in-room safes for valuables
+   - The hotel reserves the right to refuse service to anyone
+
+6. PRIVACY
+   - Guest information will be kept confidential and used only for hotel operations
+   - Information may be shared with authorities when required by law
+
+I have read and agree to the above terms and conditions.`;
+
 export default function GuestCheckin() {
   const [signature, setSignature] = useState<string>("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Get hotel ID from localStorage (ideally would come from reservation context)
+  const hotelId = localStorage.getItem("hotelId") || "89e84b73-cca7-4bd4-9dba-af421b2805f6";
+
+  // Fetch hotel details to get custom contract terms
+  const { data: hotel } = useQuery<Hotel>({
+    queryKey: ["/api/hotels", hotelId],
+    queryFn: async () => {
+      const response = await fetch(`/api/hotels/${hotelId}`);
+      if (!response.ok) throw new Error("Failed to fetch hotel");
+      return response.json();
+    },
+    enabled: !!hotelId,
+  });
+
+  const contractTerms = hotel?.contractTerms || defaultContractTerms;
 
   const form = useForm<CheckinForm>({
     resolver: zodResolver(checkinSchema),
@@ -272,6 +324,25 @@ export default function GuestCheckin() {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                {/* Contract Terms */}
+                <div className="space-y-3 pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <ScrollText className="h-5 w-5 text-primary" />
+                    <FormLabel className="text-base">Terms and Conditions</FormLabel>
+                  </div>
+                  <div 
+                    className="border rounded-md p-4 bg-muted/30 max-h-60 overflow-y-auto"
+                    data-testid="div-contract-terms"
+                  >
+                    <pre className="whitespace-pre-wrap text-sm font-sans">
+                      {contractTerms}
+                    </pre>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    By signing below, you acknowledge that you have read and agree to the above terms and conditions.
+                  </p>
                 </div>
 
                 <div className="space-y-2">
