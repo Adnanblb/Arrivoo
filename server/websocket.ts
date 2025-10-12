@@ -22,8 +22,17 @@ const hotelConnections = new Map<string, Set<string>>();
 
 export function setupWebSocket(server: Server) {
   const wss = new WebSocketServer({ 
-    server,
-    path: "/ws"
+    noServer: true
+  });
+
+  // Manually handle upgrades only for /ws path
+  server.on('upgrade', (request, socket, head) => {
+    if (request.url === '/ws') {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
+    }
+    // Let other upgrade requests (like Vite HMR) pass through
   });
 
   wss.on("connection", (ws: WebSocket) => {
