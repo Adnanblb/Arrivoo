@@ -3,6 +3,7 @@ import { StatsCard } from "@/components/StatsCard";
 import { HotelCard } from "@/components/HotelCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import {
   Building2,
   Users,
@@ -14,6 +15,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { useLocation } from "wouter";
 
 // TODO: Remove mock data when implementing real backend
 const mockHotels = [
@@ -50,6 +52,8 @@ const mockHotels = [
 export default function AdminDashboard() {
   const { theme, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const filteredHotels = mockHotels.filter((hotel) =>
     hotel.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -59,11 +63,28 @@ export default function AdminDashboard() {
   const activeHotels = mockHotels.filter((h) => h.isConnected).length;
 
   const handleManage = (id: string) => {
+    const hotel = mockHotels.find((h) => h.id === id);
     console.log("Manage hotel:", id);
+    toast({
+      title: "Opening Hotel Settings",
+      description: `Configure settings for ${hotel?.name}`,
+    });
   };
 
   const handleAddHotel = () => {
     console.log("Add new hotel");
+    toast({
+      title: "Add New Hotel",
+      description: "Opening hotel registration form...",
+    });
+  };
+
+  const handleLogout = () => {
+    toast({
+      title: "Signed Out",
+      description: "You have been successfully logged out",
+    });
+    setTimeout(() => setLocation("/"), 1000);
   };
 
   return (
@@ -97,6 +118,7 @@ export default function AdminDashboard() {
                 data-testid="button-logout"
                 variant="ghost"
                 size="icon"
+                onClick={handleLogout}
               >
                 <LogOut className="h-5 w-5" />
               </Button>

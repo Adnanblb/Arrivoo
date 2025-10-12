@@ -3,8 +3,10 @@ import { ArrivalsTable } from "@/components/ArrivalsTable";
 import { GuestCard } from "@/components/GuestCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { Moon, Sun, LogOut, RefreshCw, Download } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { useLocation } from "wouter";
 
 // TODO: Remove mock data when implementing real backend
 const mockArrivals = [
@@ -58,6 +60,8 @@ const mockArrivals = [
 export default function HotelDashboard() {
   const { theme, toggleTheme } = useTheme();
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const filteredArrivals = mockArrivals.filter((arrival) => {
     if (filter === "all") return true;
@@ -65,19 +69,45 @@ export default function HotelDashboard() {
   });
 
   const handleSendToTablet = (id: string) => {
+    const guest = mockArrivals.find((a) => a.id === id);
     console.log("Send to tablet:", id);
+    toast({
+      title: "Sent to Tablet",
+      description: `Check-in form sent to tablet for ${guest?.guestName}`,
+    });
   };
 
   const handleViewDetails = (id: string) => {
+    const guest = mockArrivals.find((a) => a.id === id);
     console.log("View details:", id);
+    toast({
+      title: "Guest Details",
+      description: `Viewing details for ${guest?.guestName}`,
+    });
   };
 
   const handleRefresh = () => {
     console.log("Refresh arrivals from Opera Cloud");
+    toast({
+      title: "Refreshing Data",
+      description: "Syncing with Opera Cloud PMS...",
+    });
   };
 
   const handleExport = () => {
     console.log("Export daily report");
+    toast({
+      title: "Exporting Report",
+      description: "Preparing daily arrivals report for download...",
+    });
+  };
+
+  const handleLogout = () => {
+    toast({
+      title: "Signed Out",
+      description: "You have been successfully logged out",
+    });
+    setTimeout(() => setLocation("/"), 1000);
   };
 
   return (
@@ -119,6 +149,7 @@ export default function HotelDashboard() {
                 data-testid="button-logout"
                 variant="ghost"
                 size="icon"
+                onClick={handleLogout}
               >
                 <LogOut className="h-5 w-5" />
               </Button>
