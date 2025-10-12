@@ -98,12 +98,34 @@ export default function ContractSearch() {
   const handleDownloadPDF = async (contractId: string) => {
     try {
       const response = await apiRequest("GET", `/api/contracts/${contractId}/pdf`);
-      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error("Failed to download PDF");
+      }
+
+      // Get the PDF as a blob
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `contract-${contractId}.pdf`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
       toast({
-        title: "Coming Soon",
-        description: "PDF download functionality will be available soon",
+        title: "Download Started",
+        description: "Your contract PDF is being downloaded",
       });
     } catch (error) {
+      console.error("PDF download error:", error);
       toast({
         title: "Download Failed",
         description: "Failed to download contract PDF",
