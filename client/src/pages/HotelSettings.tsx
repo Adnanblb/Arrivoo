@@ -52,7 +52,7 @@ export default function HotelSettings() {
   const hotelId = localStorage.getItem("hotelId");
 
   // Fetch hotel details
-  const { data: hotel, isLoading } = useQuery<Hotel>({
+  const { data: hotel, isLoading, error } = useQuery<Hotel>({
     queryKey: ["/api/hotels", hotelId],
     queryFn: async () => {
       const response = await fetch(`/api/hotels/${hotelId}`);
@@ -112,6 +112,22 @@ export default function HotelSettings() {
         <Card>
           <CardContent className="pt-6">
             <p>Please log in to access settings.</p>
+            <p className="text-sm text-muted-foreground mt-2">Hotel ID not found in session.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-destructive">Error loading hotel settings: {error.message}</p>
+            <Button onClick={() => navigate("/hotel")} className="mt-4">
+              Back to Dashboard
+            </Button>
           </CardContent>
         </Card>
       </div>
