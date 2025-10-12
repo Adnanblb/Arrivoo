@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrivalsTable } from "@/components/ArrivalsTable";
 import { GuestCard } from "@/components/GuestCard";
 import { AddTabletGuide } from "@/components/AddTabletGuide";
@@ -16,9 +17,21 @@ import { useToast } from "@/hooks/use-toast";
 import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar, Plus, Search, Settings } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLocation } from "wouter";
+import type { PmsConfiguration } from "@shared/schema";
 
 // TODO: Remove mock data when implementing real backend
 const MOCK_HOTEL_ID = "89e84b73-cca7-4bd4-9dba-af421b2805f6"; // Grand Plaza Hotel
+
+// Helper function to format PMS type names
+function formatPmsName(pmsType: string): string {
+  const pmsNames: Record<string, string> = {
+    opera_cloud: "Opera Cloud",
+    opera: "Opera Cloud",
+    protel: "Protel",
+    cloudbeds: "Cloudbeds",
+  };
+  return pmsNames[pmsType.toLowerCase()] || pmsType;
+}
 
 const mockArrivals = [
   {
@@ -81,6 +94,11 @@ export default function HotelDashboard() {
     localStorage.setItem("hotelId", MOCK_HOTEL_ID);
   }, []);
 
+  // Fetch PMS configuration for this hotel
+  const { data: pmsConfig } = useQuery<PmsConfiguration>({
+    queryKey: ['/api/pms-config', MOCK_HOTEL_ID],
+  });
+
   const filteredArrivals = mockArrivals.filter((arrival) => {
     if (filter === "all") return true;
     return arrival.status === filter;
@@ -102,10 +120,11 @@ export default function HotelDashboard() {
   };
 
   const handleRefresh = () => {
-    console.log("Refresh arrivals from Opera Cloud");
+    const pmsName = pmsConfig ? formatPmsName(pmsConfig.pmsType) : "PMS";
+    console.log(`Refresh arrivals from ${pmsName}`);
     toast({
       title: "Refreshing Data",
-      description: "Syncing with Opera Cloud PMS...",
+      description: `Syncing with ${pmsName}...`,
     });
   };
 
