@@ -36,6 +36,7 @@ export interface IStorage {
   getAllHotels(): Promise<Hotel[]>;
   createHotel(hotel: InsertHotel): Promise<Hotel>;
   updateHotel(id: string, hotel: Partial<InsertHotel>): Promise<Hotel | undefined>;
+  updateHotelContractTerms(id: string, contractTerms: string): Promise<Hotel | undefined>;
 
   // PMS Configuration management
   getPmsConfiguration(hotelId: string): Promise<PmsConfiguration | undefined>;
@@ -106,6 +107,15 @@ export class DbStorage implements IStorage {
     const result = await db
       .update(hotels)
       .set(hotel)
+      .where(eq(hotels.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateHotelContractTerms(id: string, contractTerms: string): Promise<Hotel | undefined> {
+    const result = await db
+      .update(hotels)
+      .set({ contractTerms })
       .where(eq(hotels.id, id))
       .returning();
     return result[0];

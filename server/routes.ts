@@ -185,6 +185,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/hotels/:id/contract-terms", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { contractTerms } = z.object({
+        contractTerms: z.string(),
+      }).parse(req.body);
+
+      const hotel = await storage.updateHotelContractTerms(id, contractTerms);
+
+      if (!hotel) {
+        return res.status(404).json({ error: "Hotel not found" });
+      }
+
+      res.json(hotel);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Update hotel contract terms error:", error);
+      res.status(500).json({ error: "Failed to update contract terms" });
+    }
+  });
+
   // PMS Configuration Management
   app.get("/api/pms-config/:hotelId", async (req, res) => {
     try {
