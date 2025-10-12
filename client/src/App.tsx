@@ -9,6 +9,7 @@ import Login from "@/pages/Login";
 import AdminDashboard from "@/pages/AdminDashboard";
 import HotelDashboard from "@/pages/HotelDashboard";
 import GuestCheckin from "@/pages/GuestCheckin";
+import NewCheckin from "@/pages/NewCheckin";
 
 function Router() {
   return (
@@ -16,7 +17,9 @@ function Router() {
       <Route path="/" component={Login} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/hotel" component={HotelDashboard} />
+      <Route path="/new-checkin" component={NewCheckin} />
       <Route path="/checkin/:reservationId?" component={GuestCheckin} />
+      <Route path="/guest-checkin" component={GuestCheckin} />
       <Route component={NotFound} />
     </Switch>
   );

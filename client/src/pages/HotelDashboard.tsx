@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar } from "lucide-react";
+import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar, Plus, Search } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLocation } from "wouter";
 
@@ -182,15 +182,34 @@ export default function HotelDashboard() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
-            <Button
-              data-testid="button-export"
-              variant="outline"
-              onClick={handleExport}
-              className="gap-2 w-full sm:w-auto"
-            >
-              <Download className="h-4 w-4" />
-              Export Report
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                data-testid="button-new-checkin"
+                onClick={() => setLocation("/new-checkin")}
+                className="gap-2 flex-1 sm:flex-initial"
+              >
+                <Plus className="h-4 w-4" />
+                New Check-in
+              </Button>
+              <Button
+                data-testid="button-search-contracts"
+                variant="outline"
+                onClick={() => setLocation("/contracts")}
+                className="gap-2 flex-1 sm:flex-initial"
+              >
+                <Search className="h-4 w-4" />
+                Search Contracts
+              </Button>
+              <Button
+                data-testid="button-export"
+                variant="outline"
+                onClick={handleExport}
+                className="gap-2 hidden md:flex"
+              >
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+            </div>
           </div>
 
           {/* Desktop Table View */}
