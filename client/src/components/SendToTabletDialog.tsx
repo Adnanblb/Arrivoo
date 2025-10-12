@@ -10,9 +10,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useQuery } from "@tanstack/react-query";
-import { Tablet, Wifi, WifiOff, CheckCircle2, Monitor, Smartphone, Clock } from "lucide-react";
+import { Tablet, Wifi, WifiOff, CheckCircle2, Monitor, Smartphone, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatDistanceToNow } from "date-fns";
 
 interface Device {
@@ -83,6 +84,7 @@ export function SendToTabletDialog({
   const { toast } = useToast();
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [onlineDevices, setOnlineDevices] = useState<Set<string>>(new Set());
   const dashboardDeviceId = useRef(getDashboardDeviceId());
   const sendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -122,15 +124,18 @@ export function SendToTabletDialog({
         setIsSending(false);
         
         if (message.payload.success) {
+          setSendError(null); // Clear any previous errors
           toast({
             title: "Contract Sent",
             description: `Check-in form sent to tablet successfully`,
           });
           onClose();
         } else {
+          const errorMsg = message.payload.error || "The tablet is offline or unavailable";
+          setSendError(errorMsg);
           toast({
             title: "Failed to Send",
-            description: message.payload.error || "The tablet is offline or unavailable",
+            description: errorMsg,
             variant: "destructive",
           });
         }
@@ -157,6 +162,7 @@ export function SendToTabletDialog({
     if (!isOpen) {
       setIsSending(false);
       setSelectedDeviceId(null);
+      setSendError(null);
       
       if (sendTimeoutRef.current) {
         clearTimeout(sendTimeoutRef.current);
@@ -196,13 +202,16 @@ export function SendToTabletDialog({
     }
 
     setIsSending(true);
+    setSendError(null); // Clear any previous errors
 
     // Set timeout for send operation (10 seconds)
     sendTimeoutRef.current = setTimeout(() => {
       setIsSending(false);
+      const errorMsg = "The request timed out. Please check the tablet connection and try again.";
+      setSendError(errorMsg);
       toast({
         title: "Send Timeout",
-        description: "The request timed out. Please check the tablet connection and try again.",
+        description: errorMsg,
         variant: "destructive",
       });
     }, 10000);
@@ -387,6 +396,27 @@ export function SendToTabletDialog({
               </div>
             )}
           </div>
+
+          {/* Error Alert with Retry */}
+          {sendError && !isSending && (
+            <Alert variant="destructive" data-testid="alert-send-error">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between gap-4">
+                <span className="flex-1">{sendError}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSendToTablet}
+                  disabled={!selectedDeviceId || onlineTablets.length === 0}
+                  className="flex-shrink-0"
+                  data-testid="button-retry-send"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Retry
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-2 pt-4 border-t">
