@@ -229,8 +229,19 @@ export function SendToTabletDialog({
     (device) => device.deviceType === "tablet"
   );
 
-  const onlineTablets = tabletDevices.filter((d) => d.isOnline);
-  const offlineTablets = tabletDevices.filter((d) => !d.isOnline);
+  // Sort online tablets alphabetically by name
+  const onlineTablets = tabletDevices
+    .filter((d) => d.isOnline)
+    .sort((a, b) => a.deviceName.localeCompare(b.deviceName));
+
+  // Sort offline tablets by last seen (most recent first)
+  const offlineTablets = tabletDevices
+    .filter((d) => !d.isOnline)
+    .sort((a, b) => {
+      const aTime = a.lastSeen ? new Date(a.lastSeen).getTime() : 0;
+      const bTime = b.lastSeen ? new Date(b.lastSeen).getTime() : 0;
+      return bTime - aTime; // Most recent first
+    });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
