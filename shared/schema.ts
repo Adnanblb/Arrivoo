@@ -6,21 +6,70 @@ import { z } from "zod";
 // Users table for authentication
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  hotelName: text("hotel_name").notNull(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(), // Hashed password
   role: text("role").notNull().default("hotel_staff"), // admin, hotel_staff
   hotelId: varchar("hotel_id"),
+  logoUrl: text("logo_url"), // Hotel logo URL
+  twoFactorEnabled: boolean("two_factor_enabled").default(false),
+  lastLoginAt: timestamp("last_login_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  role: true,
-  hotelId: true,
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastLoginAt: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+// Login History table
+export const loginHistory = pgTable("login_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  loginAt: timestamp("login_at").defaultNow(),
+  ipAddress: text("ip_address"),
+  deviceType: text("device_type"), // Mobile, Desktop, Tablet
+  browser: text("browser"),
+  os: text("os"),
+  status: text("status").notNull().default("success"), // success, failed
+  sessionId: text("session_id"),
+  loggedOut: boolean("logged_out").default(false),
+  loggedOutAt: timestamp("logged_out_at"),
+});
+
+export const insertLoginHistorySchema = createInsertSchema(loginHistory).omit({
+  id: true,
+  loginAt: true,
+});
+
+export type InsertLoginHistory = z.infer<typeof insertLoginHistorySchema>;
+export type LoginHistory = typeof loginHistory.$inferSelect;
+
+// OTP Codes table
+export const otpCodes = pgTable("otp_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  code: text("code").notNull(), // 6-digit code
+  type: text("type").notNull(), // login, password_reset, two_factor
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertOtpCodeSchema = createInsertSchema(otpCodes).omit({
+  id: true,
+  createdAt: true,
+  usedAt: true,
+});
+
+export type InsertOtpCode = z.infer<typeof insertOtpCodeSchema>;
+export type OtpCode = typeof otpCodes.$inferSelect;
 
 // Hotels table
 export const hotels = pgTable("hotels", {
@@ -29,6 +78,7 @@ export const hotels = pgTable("hotels", {
   address: text("address"),
   phone: text("phone"),
   email: text("email"),
+  logoUrl: text("logo_url"), // Hotel logo URL
   contractTerms: text("contract_terms"), // Custom contract terms for guest registration
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -250,3 +300,39 @@ export const insertContractAssignmentSchema = createInsertSchema(contractAssignm
 
 export type InsertContractAssignment = z.infer<typeof insertContractAssignmentSchema>;
 export type ContractAssignment = typeof contractAssignments.$inferSelect;
+
+// Authentication Schemas
+export const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+export type LoginRequest = z.infer<typeof loginSchema>;
+
+export const verifyOtpSchema = z.object({
+  userId: z.string(),
+  code: z.string().length(6, "OTP must be 6 digits"),
+  type: z.enum(["login", "password_reset", "two_factor"]),
+});
+
+export type VerifyOtpRequest = z.infer<typeof verifyOtpSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+export type ForgotPasswordRequest = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z.object({
+  userId: z.string(),
+  code: z.string().length(6, "OTP must be 6 digits"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+export type ResetPasswordRequest = z.infer<typeof resetPasswordSchema>;
+
+export const toggle2FASchema = z.object({
+  enabled: z.boolean(),
+});
+
+export type Toggle2FARequest = z.infer<typeof toggle2FASchema>;

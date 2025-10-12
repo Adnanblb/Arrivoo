@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { PmsFactory } from "./pms/pms-factory";
 import { PdfGenerator } from "./services/pdf-generator";
+import { registerAuthRoutes } from "./auth-routes";
 import {
   pmsLookupSchema,
   insertRegistrationContractSchema,
@@ -15,6 +16,8 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Register authentication routes
+  registerAuthRoutes(app, storage);
   // PMS Lookup - Manual Check-in
   app.post("/api/pms/lookup", async (req, res) => {
     try {

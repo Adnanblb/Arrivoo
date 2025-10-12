@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/Login";
+import VerifyOtp from "@/pages/VerifyOtp";
 import AdminDashboard from "@/pages/AdminDashboard";
 import HotelDashboard from "@/pages/HotelDashboard";
 import HotelSettings from "@/pages/HotelSettings";
@@ -19,6 +20,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Login} />
+      <Route path="/verify-otp" component={VerifyOtp} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/hotel" component={HotelDashboard} />
       <Route path="/settings" component={HotelSettings} />

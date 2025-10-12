@@ -1,41 +1,69 @@
 import { db } from "./db";
 import { hotels, pmsConfigurations, registrationContracts, users } from "@shared/schema";
+import { hashPassword } from "./auth";
 
 async function seed() {
   console.log("🌱 Seeding database...");
 
   try {
-    // Create a test hotel
-    const [hotel] = await db
+    // Create Rosewood Jeddah hotel
+    const [rosewoodHotel] = await db
+      .insert(hotels)
+      .values({
+        name: "Rosewood Jeddah",
+        address: "Jeddah, Saudi Arabia",
+        phone: "+966 12 123 4567",
+        email: "Albalbisi11@gmail.com",
+        logoUrl: null, // TODO: Add actual logo URL
+      })
+      .returning();
+
+    console.log("✅ Created hotel:", rosewoodHotel.name);
+    
+    // Create Grand Plaza Hotel for testing
+    const [grandPlazaHotel] = await db
       .insert(hotels)
       .values({
         name: "Grand Plaza Hotel",
         address: "123 Main Street, New York, NY 10001",
         phone: "+1 (555) 123-4567",
         email: "info@grandplaza.com",
+        logoUrl: null,
       })
       .returning();
 
-    console.log("✅ Created hotel:", hotel.name);
+    console.log("✅ Created hotel:", grandPlazaHotel.name);
 
-    // Create PMS configuration for the hotel
-    await db.insert(pmsConfigurations).values({
-      hotelId: hotel.id,
-      pmsType: "opera_cloud",
-      apiEndpoint: "https://api.opera-cloud.com/v1",
-      credentials: {
-        apiKey: "demo-api-key",
-        hotelId: hotel.id,
+    // Create PMS configurations
+    await db.insert(pmsConfigurations).values([
+      {
+        hotelId: rosewoodHotel.id,
+        pmsType: "opera_cloud",
+        apiEndpoint: "https://api.opera-cloud.com/v1",
+        credentials: {
+          apiKey: "demo-api-key",
+          hotelId: rosewoodHotel.id,
+        },
+        isActive: true,
       },
-      isActive: true,
-    });
+      {
+        hotelId: grandPlazaHotel.id,
+        pmsType: "opera_cloud",
+        apiEndpoint: "https://api.opera-cloud.com/v1",
+        credentials: {
+          apiKey: "demo-api-key",
+          hotelId: grandPlazaHotel.id,
+        },
+        isActive: true,
+      }
+    ]);
 
-    console.log("✅ Created PMS configuration (Opera Cloud)");
+    console.log("✅ Created PMS configurations (Opera Cloud)");
 
-    // Create sample registration contracts
+    // Create sample registration contracts for Grand Plaza
     const sampleContracts = [
       {
-        hotelId: hotel.id,
+        hotelId: grandPlazaHotel.id,
         guestName: "John Smith",
         email: "john.smith@email.com",
         phone: "+1 (555) 111-2222",
@@ -54,7 +82,7 @@ async function seed() {
         status: "completed",
       },
       {
-        hotelId: hotel.id,
+        hotelId: grandPlazaHotel.id,
         guestName: "Sarah Johnson",
         email: "sarah.j@email.com",
         phone: "+1 (555) 333-4444",
@@ -73,7 +101,7 @@ async function seed() {
         status: "completed",
       },
       {
-        hotelId: hotel.id,
+        hotelId: grandPlazaHotel.id,
         guestName: "Michael Chen",
         email: "m.chen@email.com",
         phone: "+1 (555) 555-6666",
@@ -99,29 +127,49 @@ async function seed() {
 
     console.log(`✅ Created ${sampleContracts.length} sample registration contracts`);
 
-    // Create admin and hotel staff users
+    // Create user accounts with properly hashed passwords
+    const rosewoodPassword = await hashPassword("Rosewood@990");
+    const testPassword = await hashPassword("password");
+    
     await db.insert(users).values([
       {
-        username: "admin@hotel.com",
-        password: "password", // In production, this should be hashed
-        role: "admin",
-        hotelId: null,
+        email: "Albalbisi11@gmail.com",
+        password: rosewoodPassword,
+        hotelName: "Rosewood Jeddah",
+        role: "hotel_staff",
+        hotelId: rosewoodHotel.id,
+        logoUrl: null,
+        twoFactorEnabled: false,
       },
       {
-        username: "hotel@hotel.com",
-        password: "password", // In production, this should be hashed
+        email: "admin@hotel.com",
+        password: testPassword,
+        hotelName: "Arrivo Admin",
+        role: "admin",
+        hotelId: null,
+        logoUrl: null,
+        twoFactorEnabled: false,
+      },
+      {
+        email: "hotel@hotel.com",
+        password: testPassword,
+        hotelName: "Grand Plaza Hotel",
         role: "hotel_staff",
-        hotelId: hotel.id,
+        hotelId: grandPlazaHotel.id,
+        logoUrl: null,
+        twoFactorEnabled: false,
       },
     ]);
 
-    console.log("✅ Created admin and hotel staff users");
+    console.log("✅ Created user accounts");
 
     console.log("\n✨ Seeding completed successfully!");
-    console.log("\nTest credentials:");
+    console.log("\nLogin credentials:");
+    console.log("  Rosewood Jeddah: Albalbisi11@gmail.com / Rosewood@990");
     console.log("  Admin: admin@hotel.com / password");
-    console.log("  Hotel Staff: hotel@hotel.com / password");
-    console.log(`\nHotel ID: ${hotel.id}`);
+    console.log("  Grand Plaza: hotel@hotel.com / password");
+    console.log(`\nRosewood Hotel ID: ${rosewoodHotel.id}`);
+    console.log(`Grand Plaza Hotel ID: ${grandPlazaHotel.id}`);
   } catch (error) {
     console.error("❌ Seeding failed:", error);
     throw error;

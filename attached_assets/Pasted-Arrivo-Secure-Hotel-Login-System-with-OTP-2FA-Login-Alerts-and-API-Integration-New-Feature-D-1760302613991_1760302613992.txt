@@ -1,0 +1,59 @@
+Arrivo – Secure Hotel Login System (with OTP, 2FA, Login Alerts, and API Integration)
+
+New Feature Description:
+	1.	Login Page Design:
+	•	Display the Arrivo logo at the top of the login page.
+	•	Below it, include fields for:
+	•	Hotel Name
+	•	Email
+	•	Password
+	•	Add a “Forgot Password?” link under the password field.
+	•	Use a clean and modern hotel-style UI.
+	2.	Hotel User Account Setup:
+	•	Create a default hotel account with:
+	•	Hotel Name: Rosewood Jeddah
+	•	Email: Albalbisi11@gmail.com
+	•	Password: Rosewood@990
+	•	When this user logs in, display the Rosewood Jeddah logo at the top of their dashboard.
+	3.	OTP Verification (Two-Step Login):
+	•	After login, send a One-Time Password (OTP) to the registered email.
+	•	The user must enter the OTP before accessing the dashboard.
+	•	OTP expires after 15 minutes and can only be used once.
+	•	If expired, allow the user to request a new one.
+	4.	Forgot Password:
+	•	When “Forgot Password” is clicked, send a reset OTP to the registered email.
+	•	After verifying it, allow the user to create a new password.
+	5.	Welcome Message:
+	•	After successful login, show:
+“Welcome back, [Hotel Name]!”
+	•	Example: “Welcome back, Rosewood Jeddah!”
+	6.	Login Notification Email:
+	•	Every time a user logs in, send a login alert email to their registered address.
+	•	The email should include:
+	•	Login date and time
+	•	Device type (if available)
+	•	IP address (optional)
+	•	A note:
+“If this wasn’t you, please reset your password immediately.”
+	•	Include a button labeled “This wasn’t me” that opens a secure page for instant password reset.
+	7.	Login History Panel:
+	•	Add a section under Dashboard → Security → Login History.
+	•	Display the last 5 login sessions, showing:
+	•	Date and time of login
+	•	Device type
+	•	IP address (optional)
+	•	Status (Successful / Failed)
+	•	Allow the user to manually log out any active session for security.
+	8.	API Integration Settings:
+	•	Add a section in Settings → API Integration where hotels can:
+	•	Enter their API Key, API URL, and Access Token to connect their PMS.
+	•	All credentials must be encrypted and stored securely.
+	•	Include a “Test Connection” button to confirm the integration.
+	9.	Two-Factor Authentication (2FA):
+	•	Add a 2FA toggle under Settings → Security.
+	•	When enabled, after entering the password, send a 6-digit code to the registered email.
+	•	Code expires after 10 minutes and must be verified before access.
+	10.	Security:
+	•	Encrypt all passwords, API keys, OTP, and 2FA codes.
+	•	Use HTTPS for all connections and login operations.
+	•	Ensure all security emails and reset links use unique, time-limited tokens.

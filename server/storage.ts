@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, or, like, desc } from "drizzle-orm";
+import { eq, and, or, like, desc, isNull, lt } from "drizzle-orm";
 import {
   users,
   hotels,
@@ -8,6 +8,8 @@ import {
   arrivals,
   devices,
   contractAssignments,
+  loginHistory,
+  otpCodes,
   type User,
   type InsertUser,
   type Hotel,
@@ -23,13 +25,31 @@ import {
   type InsertDevice,
   type ContractAssignment,
   type InsertContractAssignment,
+  type LoginHistory,
+  type InsertLoginHistory,
+  type OtpCode,
+  type InsertOtpCode,
 } from "@shared/schema";
 
 export interface IStorage {
   // User management
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  updateUserLastLogin(id: string): Promise<void>;
+  toggleUser2FA(id: string, enabled: boolean): Promise<User | undefined>;
+  
+  // Login History
+  createLoginHistory(history: InsertLoginHistory): Promise<LoginHistory>;
+  getLoginHistoryByUser(userId: string, limit?: number): Promise<LoginHistory[]>;
+  logoutSession(sessionId: string): Promise<void>;
+  
+  // OTP Codes
+  createOtpCode(otp: InsertOtpCode): Promise<OtpCode>;
+  getValidOtp(userId: string, code: string, type: string): Promise<OtpCode | undefined>;
+  markOtpAsUsed(id: string): Promise<void>;
+  deleteExpiredOtps(): Promise<void>;
 
   // Hotel management
   getHotel(id: string): Promise<Hotel | undefined>;
@@ -78,14 +98,89 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.username, username));
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email));
+    return result[0];
+  }
+
+  async updateUser(id: string, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const result = await db.update(users).set(userData).where(eq(users.id, id)).returning();
+    return result[0];
+  }
+
+  async updateUserLastLogin(id: string): Promise<void> {
+    await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, id));
+  }
+
+  async toggleUser2FA(id: string, enabled: boolean): Promise<User | undefined> {
+    const result = await db.update(users).set({ twoFactorEnabled: enabled }).where(eq(users.id, id)).returning();
     return result[0];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const result = await db.insert(users).values(insertUser).returning();
     return result[0];
+  }
+
+  // Login History methods
+  async createLoginHistory(history: InsertLoginHistory): Promise<LoginHistory> {
+    const result = await db.insert(loginHistory).values(history).returning();
+    return result[0];
+  }
+
+  async getLoginHistoryByUser(userId: string, limit: number = 5): Promise<LoginHistory[]> {
+    const result = await db
+      .select()
+      .from(loginHistory)
+      .where(eq(loginHistory.userId, userId))
+      .orderBy(desc(loginHistory.loginAt))
+      .limit(limit);
+    return result;
+  }
+
+  async logoutSession(sessionId: string): Promise<void> {
+    await db
+      .update(loginHistory)
+      .set({ loggedOut: true, loggedOutAt: new Date() })
+      .where(eq(loginHistory.sessionId, sessionId));
+  }
+
+  // OTP Code methods
+  async createOtpCode(otp: InsertOtpCode): Promise<OtpCode> {
+    const result = await db.insert(otpCodes).values(otp).returning();
+    return result[0];
+  }
+
+  async getValidOtp(userId: string, code: string, type: string): Promise<OtpCode | undefined> {
+    const now = new Date();
+    const result = await db
+      .select()
+      .from(otpCodes)
+      .where(
+        and(
+          eq(otpCodes.userId, userId),
+          eq(otpCodes.code, code),
+          eq(otpCodes.type, type),
+          isNull(otpCodes.usedAt)
+        )
+      )
+      .orderBy(desc(otpCodes.expiresAt))
+      .limit(1);
+    
+    const otp = result[0];
+    if (otp && otp.expiresAt > now) {
+      return otp;
+    }
+    return undefined;
+  }
+
+  async markOtpAsUsed(id: string): Promise<void> {
+    await db.update(otpCodes).set({ usedAt: new Date() }).where(eq(otpCodes.id, id));
+  }
+
+  async deleteExpiredOtps(): Promise<void> {
+    const now = new Date();
+    await db.delete(otpCodes).where(lt(otpCodes.expiresAt, now));
   }
 
   // Hotel methods
