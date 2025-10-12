@@ -20,9 +20,19 @@ This is a professional hotel check-in platform designed to streamline guest regi
 - Supports both desktop table view and mobile card view
 
 ### 3. Contract Management
-- Download/print capability for signed contracts (PDF generation coming soon)
+- Download/print capability for signed contracts with professional PDF generation
 - Full contract details view in modal dialog
 - Secure storage with timestamps and PMS source tracking
+- PDFs include guest information, reservation details, and embedded digital signatures
+
+### 4. Automatic Hourly PMS Sync
+- Automated hourly synchronization of arrivals from all connected PMS systems
+- Runs every hour on the hour from 5 AM to 5 AM (24-hour coverage)
+- Fetches today's arrivals with complete guest and reservation details
+- Stores arrivals in dedicated table with unique constraint to prevent duplicates
+- Daily cleanup removes arrivals older than 5 years at 2 AM
+- Sync runs automatically on server startup for immediate data availability
+- API endpoint provides access to synced arrivals for each hotel
 
 ## User Preferences
 
@@ -79,6 +89,8 @@ Preferred communication style: Simple, everyday language.
   - `/api/pms/lookup` - Manual check-in reservation lookup
   - `/api/contracts` - Contract CRUD operations
   - `/api/contracts/search` - Advanced contract search
+  - `/api/contracts/:id/pdf` - PDF generation and download for signed contracts
+  - `/api/arrivals/:hotelId` - Retrieve synced arrivals for a hotel (defaults to today)
   - `/api/hotels` - Hotel management
   - `/api/pms-config` - PMS configuration management
 - Centralized route registration through `registerRoutes` function
@@ -109,6 +121,11 @@ Preferred communication style: Simple, everyday language.
 - Replit-specific plugins for development banner, error overlay, and cartographer
 - TypeScript for static type checking across the entire codebase
 - ESBuild for server-side bundling in production
+
+**Automation & Document Generation**
+- node-cron for scheduling hourly PMS sync and daily cleanup tasks
+- PDFKit for generating professional PDF documents from registration contracts
+- Cron jobs run on server startup and at scheduled intervals
 
 **Planned Integrations**
 - Opera Cloud PMS integration (referenced in design guidelines but not yet implemented)
