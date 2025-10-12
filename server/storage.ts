@@ -6,6 +6,8 @@ import {
   pmsConfigurations,
   registrationContracts,
   arrivals,
+  devices,
+  contractAssignments,
   type User,
   type InsertUser,
   type Hotel,
@@ -17,6 +19,10 @@ import {
   type SearchContracts,
   type Arrival,
   type InsertArrival,
+  type Device,
+  type InsertDevice,
+  type ContractAssignment,
+  type InsertContractAssignment,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -48,6 +54,20 @@ export interface IStorage {
   updateArrivalCheckInStatus(id: string, contractId: string): Promise<Arrival | undefined>;
   deleteOldArrivals(hotelId: string, beforeDate: string): Promise<void>;
   upsertArrival(arrival: InsertArrival): Promise<Arrival>;
+
+  // Device management (tablets/iPads)
+  createDevice(device: InsertDevice): Promise<Device>;
+  getDevice(id: string): Promise<Device | undefined>;
+  getDevicesByHotel(hotelId: string): Promise<Device[]>;
+  updateDevice(id: string, device: Partial<InsertDevice>): Promise<Device | undefined>;
+  updateDeviceSocketId(id: string, socketId: string | null, isOnline: boolean): Promise<Device | undefined>;
+  deleteDevice(id: string): Promise<void>;
+
+  // Contract Assignments (send to tablet)
+  createContractAssignment(assignment: InsertContractAssignment): Promise<ContractAssignment>;
+  getContractAssignment(contractId: string): Promise<ContractAssignment | undefined>;
+  updateContractAssignmentStatus(id: string, status: string, timestamp?: Date): Promise<ContractAssignment | undefined>;
+  getAssignmentsByDevice(deviceId: string): Promise<ContractAssignment[]>;
 }
 
 export class DbStorage implements IStorage {
@@ -237,6 +257,98 @@ export class DbStorage implements IStorage {
       .returning();
     
     return result[0];
+  }
+
+  // Device methods
+  async createDevice(device: InsertDevice): Promise<Device> {
+    const result = await db.insert(devices).values(device).returning();
+    return result[0];
+  }
+
+  async getDevice(id: string): Promise<Device | undefined> {
+    const result = await db.select().from(devices).where(eq(devices.id, id));
+    return result[0];
+  }
+
+  async getDevicesByHotel(hotelId: string): Promise<Device[]> {
+    return await db
+      .select()
+      .from(devices)
+      .where(eq(devices.hotelId, hotelId))
+      .orderBy(desc(devices.lastSeen));
+  }
+
+  async updateDevice(id: string, device: Partial<InsertDevice>): Promise<Device | undefined> {
+    const result = await db
+      .update(devices)
+      .set({ ...device, updatedAt: new Date() })
+      .where(eq(devices.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateDeviceSocketId(id: string, socketId: string | null, isOnline: boolean): Promise<Device | undefined> {
+    const result = await db
+      .update(devices)
+      .set({
+        socketId,
+        isOnline,
+        lastSeen: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(devices.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteDevice(id: string): Promise<void> {
+    await db.delete(devices).where(eq(devices.id, id));
+  }
+
+  // Contract Assignment methods
+  async createContractAssignment(assignment: InsertContractAssignment): Promise<ContractAssignment> {
+    const result = await db.insert(contractAssignments).values(assignment).returning();
+    return result[0];
+  }
+
+  async getContractAssignment(contractId: string): Promise<ContractAssignment | undefined> {
+    const result = await db
+      .select()
+      .from(contractAssignments)
+      .where(eq(contractAssignments.contractId, contractId))
+      .orderBy(desc(contractAssignments.sentAt));
+    return result[0];
+  }
+
+  async updateContractAssignmentStatus(
+    id: string,
+    status: string,
+    timestamp?: Date
+  ): Promise<ContractAssignment | undefined> {
+    const updates: any = { status };
+    
+    if (status === "viewing" && timestamp) {
+      updates.viewedAt = timestamp;
+    } else if (status === "signed" && timestamp) {
+      updates.signedAt = timestamp;
+    } else if (status === "completed" && timestamp) {
+      updates.completedAt = timestamp;
+    }
+
+    const result = await db
+      .update(contractAssignments)
+      .set(updates)
+      .where(eq(contractAssignments.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async getAssignmentsByDevice(deviceId: string): Promise<ContractAssignment[]> {
+    return await db
+      .select()
+      .from(contractAssignments)
+      .where(eq(contractAssignments.deviceId, deviceId))
+      .orderBy(desc(contractAssignments.sentAt));
   }
 }
 

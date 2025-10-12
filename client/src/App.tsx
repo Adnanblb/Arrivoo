@@ -11,6 +11,8 @@ import HotelDashboard from "@/pages/HotelDashboard";
 import GuestCheckin from "@/pages/GuestCheckin";
 import NewCheckin from "@/pages/NewCheckin";
 import ContractSearch from "@/pages/ContractSearch";
+import DeviceRegistration from "@/pages/DeviceRegistration";
+import TabletSignature from "@/pages/TabletSignature";
 
 function Router() {
   return (
@@ -22,6 +24,8 @@ function Router() {
       <Route path="/contracts" component={ContractSearch} />
       <Route path="/checkin/:reservationId?" component={GuestCheckin} />
       <Route path="/guest-checkin" component={GuestCheckin} />
+      <Route path="/tablet/register" component={DeviceRegistration} />
+      <Route path="/tablet/signature" component={TabletSignature} />
       <Route component={NotFound} />
     </Switch>
   );

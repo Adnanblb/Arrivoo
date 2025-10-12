@@ -9,6 +9,8 @@ import {
   searchContractsSchema,
   insertHotelSchema,
   insertPmsConfigurationSchema,
+  insertDeviceSchema,
+  insertContractAssignmentSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -239,6 +241,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get arrivals error:", error);
       res.status(500).json({ error: "Failed to get arrivals" });
+    }
+  });
+
+  // Device Management - Register/Get Devices (Tablets)
+  app.post("/api/devices", async (req, res) => {
+    try {
+      const deviceData = insertDeviceSchema.parse(req.body);
+      const device = await storage.createDevice(deviceData);
+      res.json(device);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Create device error:", error);
+      res.status(500).json({ error: "Failed to create device" });
+    }
+  });
+
+  app.get("/api/devices/:hotelId", async (req, res) => {
+    try {
+      const { hotelId } = req.params;
+      const devices = await storage.getDevicesByHotel(hotelId);
+      res.json(devices);
+    } catch (error) {
+      console.error("Get devices error:", error);
+      res.status(500).json({ error: "Failed to get devices" });
+    }
+  });
+
+  app.patch("/api/devices/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const device = await storage.updateDevice(id, updates);
+      
+      if (!device) {
+        return res.status(404).json({ error: "Device not found" });
+      }
+      
+      res.json(device);
+    } catch (error) {
+      console.error("Update device error:", error);
+      res.status(500).json({ error: "Failed to update device" });
+    }
+  });
+
+  app.delete("/api/devices/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteDevice(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete device error:", error);
+      res.status(500).json({ error: "Failed to delete device" });
+    }
+  });
+
+  // Contract Assignments - Send contracts to tablets
+  app.post("/api/contract-assignments", async (req, res) => {
+    try {
+      const assignmentData = insertContractAssignmentSchema.parse(req.body);
+      const assignment = await storage.createContractAssignment(assignmentData);
+      res.json(assignment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Create contract assignment error:", error);
+      res.status(500).json({ error: "Failed to create contract assignment" });
+    }
+  });
+
+  app.get("/api/contract-assignments/:contractId", async (req, res) => {
+    try {
+      const { contractId } = req.params;
+      const assignment = await storage.getContractAssignment(contractId);
+      
+      if (!assignment) {
+        return res.status(404).json({ error: "Assignment not found" });
+      }
+      
+      res.json(assignment);
+    } catch (error) {
+      console.error("Get contract assignment error:", error);
+      res.status(500).json({ error: "Failed to get contract assignment" });
     }
   });
 

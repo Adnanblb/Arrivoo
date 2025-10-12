@@ -196,3 +196,47 @@ export const pmsReservationSchema = z.object({
 });
 
 export type PmsReservation = z.infer<typeof pmsReservationSchema>;
+
+// Devices table - tracks tablets/iPads registered to hotels
+export const devices = pgTable("devices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  hotelId: varchar("hotel_id").notNull(),
+  deviceName: text("device_name").notNull(), // User-friendly name (e.g., "Front Desk iPad 1")
+  deviceType: text("device_type").default("tablet"), // tablet, desktop
+  socketId: text("socket_id"), // Current WebSocket connection ID
+  isOnline: boolean("is_online").default(false),
+  lastSeen: timestamp("last_seen").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertDeviceSchema = createInsertSchema(devices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastSeen: true,
+});
+
+export type InsertDevice = z.infer<typeof insertDeviceSchema>;
+export type Device = typeof devices.$inferSelect;
+
+// Contract Assignments - tracks which contract is sent to which device
+export const contractAssignments = pgTable("contract_assignments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull(),
+  deviceId: varchar("device_id").notNull(),
+  hotelId: varchar("hotel_id").notNull(),
+  status: text("status").default("sent"), // sent, viewing, signed, completed
+  sentAt: timestamp("sent_at").defaultNow(),
+  viewedAt: timestamp("viewed_at"),
+  signedAt: timestamp("signed_at"),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertContractAssignmentSchema = createInsertSchema(contractAssignments).omit({
+  id: true,
+  sentAt: true,
+});
+
+export type InsertContractAssignment = z.infer<typeof insertContractAssignmentSchema>;
+export type ContractAssignment = typeof contractAssignments.$inferSelect;
