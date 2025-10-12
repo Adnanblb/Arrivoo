@@ -1,18 +1,150 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Users table for authentication
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  role: text("role").notNull().default("hotel_staff"), // admin, hotel_staff
+  hotelId: varchar("hotel_id"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  role: true,
+  hotelId: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+// Hotels table
+export const hotels = pgTable("hotels", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  address: text("address"),
+  phone: text("phone"),
+  email: text("email"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertHotelSchema = createInsertSchema(hotels).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertHotel = z.infer<typeof insertHotelSchema>;
+export type Hotel = typeof hotels.$inferSelect;
+
+// PMS Configurations table - supports multiple PMS types
+export const pmsConfigurations = pgTable("pms_configurations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  hotelId: varchar("hotel_id").notNull(),
+  pmsType: text("pms_type").notNull(), // opera_cloud, protel, cloudbeds, etc.
+  apiEndpoint: text("api_endpoint"),
+  credentials: json("credentials"), // Encrypted JSON with API keys/credentials
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPmsConfigurationSchema = createInsertSchema(pmsConfigurations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPmsConfiguration = z.infer<typeof insertPmsConfigurationSchema>;
+export type PmsConfiguration = typeof pmsConfigurations.$inferSelect;
+
+// Registration Contracts table - stores all signed registration forms
+export const registrationContracts = pgTable("registration_contracts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  hotelId: varchar("hotel_id").notNull(),
+  
+  // Guest Information
+  guestName: text("guest_name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  idNumber: text("id_number"), // Passport or ID number
+  
+  // Reservation Details
+  reservationNumber: text("reservation_number").notNull(),
+  confirmationNumber: text("confirmation_number"),
+  roomNumber: text("room_number"),
+  roomType: text("room_type"),
+  
+  // Dates
+  arrivalDate: text("arrival_date").notNull(),
+  departureDate: text("departure_date").notNull(),
+  numberOfNights: integer("number_of_nights"),
+  
+  // Registration Details
+  signatureDataUrl: text("signature_data_url"), // Base64 encoded signature image
+  registeredAt: timestamp("registered_at").defaultNow(),
+  registeredBy: varchar("registered_by"), // Staff user ID
+  
+  // PMS Integration
+  pmsSource: text("pms_source"), // opera_cloud, protel, cloudbeds, manual
+  pmsReservationId: text("pms_reservation_id"), // External PMS ID
+  
+  // Additional fields
+  specialRequests: text("special_requests"),
+  numberOfGuests: integer("number_of_guests"),
+  status: text("status").default("completed"), // completed, pending, cancelled
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertRegistrationContractSchema = createInsertSchema(registrationContracts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertRegistrationContract = z.infer<typeof insertRegistrationContractSchema>;
+export type RegistrationContract = typeof registrationContracts.$inferSelect;
+
+// Search schema for contracts
+export const searchContractsSchema = z.object({
+  hotelId: z.string(),
+  guestName: z.string().optional(),
+  roomNumber: z.string().optional(),
+  reservationNumber: z.string().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+});
+
+export type SearchContracts = z.infer<typeof searchContractsSchema>;
+
+// PMS Lookup Request schema
+export const pmsLookupSchema = z.object({
+  confirmationNumber: z.string().min(1, "Confirmation number is required"),
+  hotelId: z.string(),
+});
+
+export type PmsLookup = z.infer<typeof pmsLookupSchema>;
+
+// PMS Reservation Response schema (what we get from PMS API)
+export const pmsReservationSchema = z.object({
+  guestName: z.string(),
+  reservationNumber: z.string(),
+  confirmationNumber: z.string(),
+  arrivalDate: z.string(),
+  departureDate: z.string(),
+  roomType: z.string().optional(),
+  roomNumber: z.string().optional(),
+  numberOfNights: z.number(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  numberOfGuests: z.number().optional(),
+  specialRequests: z.string().optional(),
+});
+
+export type PmsReservation = z.infer<typeof pmsReservationSchema>;
