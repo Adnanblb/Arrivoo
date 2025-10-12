@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/Login";
 import VerifyOtp from "@/pages/VerifyOtp";
@@ -21,11 +23,31 @@ function Router() {
     <Switch>
       <Route path="/" component={Login} />
       <Route path="/verify-otp" component={VerifyOtp} />
-      <Route path="/admin" component={AdminDashboard} />
-      <Route path="/hotel" component={HotelDashboard} />
-      <Route path="/settings" component={HotelSettings} />
-      <Route path="/new-checkin" component={NewCheckin} />
-      <Route path="/contracts" component={ContractSearch} />
+      <Route path="/admin">
+        <ProtectedRoute>
+          <AdminDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/hotel">
+        <ProtectedRoute>
+          <HotelDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute>
+          <HotelSettings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/new-checkin">
+        <ProtectedRoute>
+          <NewCheckin />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/contracts">
+        <ProtectedRoute>
+          <ContractSearch />
+        </ProtectedRoute>
+      </Route>
       <Route path="/checkin/:reservationId?" component={GuestCheckin} />
       <Route path="/guest-checkin" component={GuestCheckin} />
       <Route path="/tablet/register" component={DeviceRegistration} />
@@ -38,12 +60,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

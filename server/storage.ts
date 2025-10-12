@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, or, like, desc, isNull, lt } from "drizzle-orm";
+import { eq, and, or, like, desc, isNull, lt, sql } from "drizzle-orm";
 import {
   users,
   hotels,
@@ -43,7 +43,7 @@ export interface IStorage {
   // Login History
   createLoginHistory(history: InsertLoginHistory): Promise<LoginHistory>;
   getLoginHistoryByUser(userId: string, limit?: number): Promise<LoginHistory[]>;
-  logoutSession(sessionId: string): Promise<void>;
+  logoutSession(sessionId: string, userId?: string): Promise<void>;
   
   // OTP Codes
   createOtpCode(otp: InsertOtpCode): Promise<OtpCode>;
@@ -138,11 +138,34 @@ export class DbStorage implements IStorage {
     return result;
   }
 
-  async logoutSession(sessionId: string): Promise<void> {
+  async logoutSession(sessionId: string, userId?: string): Promise<void> {
+    // If userId is provided, verify ownership first
+    if (userId) {
+      const session = await db
+        .select()
+        .from(loginHistory)
+        .where(
+          and(
+            eq(loginHistory.sessionId, sessionId),
+            eq(loginHistory.userId, userId),
+            eq(loginHistory.loggedOut, false)
+          )
+        )
+        .limit(1);
+      
+      if (session.length === 0) {
+        throw new Error("Session not found or already logged out");
+      }
+    }
+    
+    // Update login history to mark as logged out
     await db
       .update(loginHistory)
       .set({ loggedOut: true, loggedOutAt: new Date() })
       .where(eq(loginHistory.sessionId, sessionId));
+    
+    // Delete from PostgreSQL session store
+    await db.execute(sql`DELETE FROM session WHERE sid = ${sessionId}`);
   }
 
   // OTP Code methods

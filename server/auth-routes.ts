@@ -1,6 +1,7 @@
 import { Express, Request, Response } from "express";
 import { z } from "zod";
 import { IStorage } from "./storage";
+import { requireAuth } from "./middleware";
 import { hashPassword, verifyPassword, generateOtpCode, getOtpExpiry, getDeviceInfo, getClientIP } from "./auth";
 import { sendOtpEmail, sendLoginNotification, sendPasswordResetConfirmation } from "./email";
 import {
@@ -13,6 +14,53 @@ import {
 import crypto from "crypto";
 
 export function registerAuthRoutes(app: Express, storage: IStorage) {
+  
+  /**
+   * GET /api/auth/me
+   * Get current authenticated user
+   */
+  app.get("/api/auth/me", async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ 
+          authenticated: false,
+          error: "Not authenticated" 
+        });
+      }
+      
+      // Get user details
+      const user = await storage.getUser(userId);
+      if (!user) {
+        // Clear invalid session
+        req.session?.destroy(() => {});
+        return res.status(401).json({ 
+          authenticated: false,
+          error: "User not found" 
+        });
+      }
+      
+      // Get hotel details
+      const hotel = await storage.getHotel(user.hotelId);
+      
+      res.json({
+        authenticated: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          hotelName: user.hotelName,
+          hotelId: user.hotelId,
+          logoUrl: user.logoUrl,
+          twoFactorEnabled: user.twoFactorEnabled,
+        },
+        hotel: hotel,
+      });
+    } catch (error) {
+      console.error("Get current user error:", error);
+      res.status(500).json({ error: "Failed to get user info" });
+    }
+  });
   
   /**
    * POST /api/auth/login
@@ -127,8 +175,14 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
         });
       }
       
-      // Create session
-      const sessionId = crypto.randomBytes(32).toString('hex');
+      // Store session in express session first
+      if (req.session) {
+        req.session.userId = user.id;
+        // Use the actual express-session ID
+        req.session.sessionId = req.sessionID;
+      }
+      
+      const sessionId = req.sessionID; // Use actual express-session ID
       const deviceInfo = getDeviceInfo(req.headers);
       const ipAddress = getClientIP(req.headers, req.socket);
       
@@ -155,12 +209,6 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
         browser: deviceInfo.browser,
         ipAddress,
       });
-      
-      // Store session in express session
-      if (req.session) {
-        req.session.userId = user.id;
-        req.session.sessionId = sessionId;
-      }
       
       res.json({
         success: true,
@@ -319,7 +367,7 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
    * POST /api/auth/logout
    * Logout current session
    */
-  app.post("/api/auth/logout", async (req: Request, res: Response) => {
+  app.post("/api/auth/logout", requireAuth, async (req: Request, res: Response) => {
     try {
       const sessionId = req.session?.sessionId;
       
@@ -342,43 +390,10 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
   });
   
   /**
-   * GET /api/auth/me
-   * Get current authenticated user
-   */
-  app.get("/api/auth/me", async (req: Request, res: Response) => {
-    try {
-      const userId = req.session?.userId;
-      
-      if (!userId) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
-      
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      
-      res.json({
-        id: user.id,
-        email: user.email,
-        hotelName: user.hotelName,
-        hotelId: user.hotelId,
-        logoUrl: user.logoUrl,
-        role: user.role,
-        twoFactorEnabled: user.twoFactorEnabled,
-        lastLoginAt: user.lastLoginAt,
-      });
-    } catch (error) {
-      console.error("Get user error:", error);
-      res.status(500).json({ error: "Failed to get user" });
-    }
-  });
-  
-  /**
    * GET /api/auth/login-history
    * Get login history for current user
    */
-  app.get("/api/auth/login-history", async (req: Request, res: Response) => {
+  app.get("/api/auth/login-history", requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = req.session?.userId;
       
@@ -398,20 +413,29 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
   
   /**
    * POST /api/auth/logout-session
-   * Logout a specific session
+   * Logout a specific session (user can only logout their own sessions)
    */
-  app.post("/api/auth/logout-session", async (req: Request, res: Response) => {
+  app.post("/api/auth/logout-session", requireAuth, async (req: Request, res: Response) => {
     try {
+      const userId = req.session?.userId;
       const { sessionId } = req.body;
       
       if (!sessionId) {
         return res.status(400).json({ error: "Session ID required" });
       }
       
-      await storage.logoutSession(sessionId);
+      // Storage layer verifies ownership and deletes from both session store and login history
+      await storage.logoutSession(sessionId, userId);
       
       res.json({ success: true, message: "Session logged out successfully" });
     } catch (error) {
+      // Error thrown if session doesn't belong to user or already logged out
+      if (error instanceof Error && error.message.includes("Session not found")) {
+        return res.status(403).json({ 
+          error: "Forbidden", 
+          message: error.message 
+        });
+      }
       console.error("Logout session error:", error);
       res.status(500).json({ error: "Failed to logout session" });
     }
@@ -421,7 +445,7 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
    * PUT /api/auth/toggle-2fa
    * Toggle two-factor authentication
    */
-  app.put("/api/auth/toggle-2fa", async (req: Request, res: Response) => {
+  app.put("/api/auth/toggle-2fa", requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = req.session?.userId;
       
