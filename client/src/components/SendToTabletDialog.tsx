@@ -131,7 +131,8 @@ export function SendToTabletDialog({
           });
           onClose();
         } else {
-          const errorMsg = message.payload.error || "The tablet is offline or unavailable";
+          const baseError = message.payload.error || "The tablet is offline or unavailable";
+          const errorMsg = `${baseError}. Try refreshing the device list or ensure the tablet is connected to WiFi.`;
           setSendError(errorMsg);
           toast({
             title: "Failed to Send",
@@ -207,7 +208,7 @@ export function SendToTabletDialog({
     // Set timeout for send operation (10 seconds)
     sendTimeoutRef.current = setTimeout(() => {
       setIsSending(false);
-      const errorMsg = "The request timed out. Please check the tablet connection and try again.";
+      const errorMsg = "Connection timeout - The tablet didn't respond in time. Check if the tablet is on the same WiFi network and try refreshing the device list.";
       setSendError(errorMsg);
       toast({
         title: "Send Timeout",
