@@ -33,7 +33,7 @@ export default function NewCheckin() {
 
   const lookupMutation = useMutation({
     mutationFn: async (data: LookupForm) => {
-      const response = await apiRequest("/api/pms/lookup", "POST", {
+      const response = await apiRequest("POST", "/api/pms/lookup", {
         confirmationNumber: data.confirmationNumber,
         hotelId: "89e84b73-cca7-4bd4-9dba-af421b2805f6", // Mock hotel ID - in production, get from auth context
       });

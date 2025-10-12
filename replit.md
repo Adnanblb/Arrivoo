@@ -1,8 +1,28 @@
-# Hotel Check-In Platform with Opera Cloud PMS Integration
+# Hotel Check-In Platform with Flexible PMS Integration
 
 ## Overview
 
-This is a hotel check-in platform designed to streamline guest registration with digital signature capture and Opera Cloud PMS integration. The application serves three primary user roles: administrators who manage multiple hotels, hotel staff who handle daily arrivals, and guests who complete their check-in process. Built with React and Express, it uses Material Design principles to provide a professional, trustworthy interface suitable for the hospitality industry.
+This is a professional hotel check-in platform designed to streamline guest registration with digital signature capture and flexible PMS integration. The application supports multiple Property Management Systems (Opera Cloud, Protel, Cloudbeds, etc.) through a modular connector architecture. It serves three primary user roles: administrators who manage multiple hotels, hotel staff who handle daily arrivals and search contracts, and guests who complete their check-in process. Built with React and Express with PostgreSQL database, it uses Material Design principles to provide a professional, trustworthy interface suitable for the hospitality industry.
+
+## Key Features
+
+### 1. Manual Check-in (PMS Lookup)
+- Staff can manually enter a confirmation number to lookup reservations
+- System uses modular PMS API connector to fetch reservation details from any PMS
+- Retrieved data includes: guest name, reservation number, dates, room type/number, number of nights
+- Auto-fills digital registration card with PMS data
+- Shows "Reservation not found" message if lookup fails
+
+### 2. Contract Search & Archive
+- Staff can search all registration contracts (current and historical)
+- Search by guest name, room number, or reservation number
+- Displays comprehensive contract details including digital signature
+- Supports both desktop table view and mobile card view
+
+### 3. Contract Management
+- Download/print capability for signed contracts (PDF generation coming soon)
+- Full contract details view in modal dialog
+- Secure storage with timestamps and PMS source tracking
 
 ## User Preferences
 
@@ -42,19 +62,34 @@ Preferred communication style: Simple, everyday language.
 - Vite integration in development mode for seamless full-stack development
 
 **Data Layer**
-- In-memory storage implementation (MemStorage) as the current data persistence layer
-- Interface-based storage abstraction (IStorage) allows easy swapping to database implementations
-- Drizzle ORM configured for PostgreSQL (currently not actively used but infrastructure is in place)
+- PostgreSQL database with Drizzle ORM for data persistence
+- Database storage implementation (DbStorage) with full CRUD operations
+- Interface-based storage abstraction (IStorage) for modularity
+- Comprehensive schema supporting hotels, PMS configurations, registration contracts, and users
+
+**PMS Integration Layer**
+- Modular PMS connector architecture supporting multiple PMS types
+- Interface-based design (`IPmsConnector`) for easy addition of new PMS systems
+- Factory pattern (`PmsFactory`) for creating appropriate connectors
+- Currently supports: Opera Cloud, Protel, and Cloudbeds (with mock implementations)
 
 **API Design**
 - RESTful endpoints prefixed with `/api`
+- Key endpoints:
+  - `/api/pms/lookup` - Manual check-in reservation lookup
+  - `/api/contracts` - Contract CRUD operations
+  - `/api/contracts/search` - Advanced contract search
+  - `/api/hotels` - Hotel management
+  - `/api/pms-config` - PMS configuration management
 - Centralized route registration through `registerRoutes` function
+- Zod schema validation for all request bodies
 - Error handling middleware for consistent error responses
 
 **Key Architectural Decisions**
-- Separation of concerns: routes, storage, and business logic are modular
-- Storage interface allows switching from in-memory to persistent database without changing business logic
-- Development/production environment handling with conditional Vite setup
+- Modular PMS connector system allows supporting any PMS type
+- Separation of concerns: routes, storage, PMS connectors, and business logic are isolated
+- Database-first approach with PostgreSQL for data persistence
+- All contracts stored with digital signatures for long-term compliance
 
 ### External Dependencies
 
