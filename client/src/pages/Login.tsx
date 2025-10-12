@@ -45,15 +45,16 @@ export default function Login() {
       return await response.json();
     },
     onSuccess: (data) => {
-      if (data.requiresOtp) {
-        // Navigate to OTP verification page
-        setLocation(`/verify-otp?userId=${data.userId}&type=login&requires2FA=${data.requires2FA || false}`);
-      } else {
+      // OTP system disabled - direct login
+      if (data.success && data.user) {
         toast({
           title: "Login Successful",
           description: `Welcome back!`,
         });
         setLocation("/hotel");
+      } else if (data.requiresOtp) {
+        // OTP flow (currently disabled but kept for future reactivation)
+        setLocation(`/verify-otp?userId=${data.userId}&type=login&requires2FA=${data.requires2FA || false}`);
       }
     },
     onError: (error: any) => {

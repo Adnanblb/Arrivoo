@@ -44,15 +44,14 @@ This is a professional hotel check-in platform designed to streamline guest regi
 - Changes saved per hotel and persist across all check-in flows
 
 ### 6. Secure Authentication & Session Management
-- OTP-based login system with email verification (15-minute expiry)
-- Optional two-factor authentication (2FA) for enhanced security
-- Login notification emails with device, IP, and timestamp details
-- Comprehensive login history tracking (last 5 sessions with device info)
+- **Direct login with email and password** (OTP system currently disabled)
+- Session-based authentication with PostgreSQL session store
+- Login history tracking with device info, IP addresses, and session management
 - Secure session management with PostgreSQL-backed session store
 - Session invalidation on logout removes all traces from database
 - Protected routes require valid authentication
 - Frontend route protection with automatic redirect to login
-- **Email Integration:** Development mode - OTP codes are logged to server console and stored in database. For production use, integrate with email service (Resend, SendGrid, etc.). To get OTP codes: check server logs or query database directly
+- **OTP System Status:** DISABLED for now - Can be reactivated later by enabling OTP verification in auth-routes.ts. Infrastructure remains in place (OTP codes table, email templates, verification pages)
 
 ## User Preferences
 

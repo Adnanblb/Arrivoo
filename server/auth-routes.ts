@@ -96,28 +96,53 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
         return res.status(401).json({ error: "Invalid email or password" });
       }
       
-      // Generate OTP code
-      const otpCode = generateOtpCode();
-      const expiresAt = getOtpExpiry('login');
+      // OTP DISABLED - Direct login without OTP verification
+      // Create session immediately
+      if (!req.session) {
+        return res.status(500).json({ error: "Session not available" });
+      }
       
-      // Store OTP
-      await storage.createOtpCode({
-        userId: user.id,
-        code: otpCode,
-        type: 'login',
-        expiresAt,
-      });
+      req.session.userId = user.id;
+      req.session.sessionId = req.sessionID;
       
-      // Send OTP via email
-      await sendOtpEmail(user.email, otpCode, user.hotelName, 'login');
-      
-      res.json({
-        success: true,
-        message: "OTP sent to your email",
-        userId: user.id,
-        email: user.email,
-        requiresOtp: true,
-        requires2FA: user.twoFactorEnabled,
+      // Save session to database before responding
+      req.session.save(async (err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ error: "Failed to create session" });
+        }
+        
+        const sessionId = req.sessionID;
+        const deviceInfo = getDeviceInfo(req.headers);
+        const ipAddress = getClientIP(req.headers, req.socket);
+        
+        // Log successful login
+        await storage.createLoginHistory({
+          userId: user.id,
+          ipAddress,
+          deviceType: deviceInfo.deviceType,
+          browser: deviceInfo.browser,
+          os: deviceInfo.os,
+          status: "success",
+          sessionId,
+        });
+        
+        // Update last login
+        await storage.updateUserLastLogin(user.id);
+        
+        console.log(`✅ Login successful for ${user.email}, session ${sessionId} created`);
+        
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            hotelName: user.hotelName,
+            hotelId: user.hotelId,
+            logoUrl: user.logoUrl,
+            twoFactorEnabled: user.twoFactorEnabled,
+          },
+        });
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
