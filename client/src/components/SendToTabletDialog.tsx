@@ -90,7 +90,7 @@ export function SendToTabletDialog({
   const sendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch devices for this hotel
-  const { data: devices = [], isLoading } = useQuery<Device[]>({
+  const { data: devices = [], isLoading, refetch, isRefetching } = useQuery<Device[]>({
     queryKey: ["/api/devices", hotelId],
     enabled: isOpen && !!hotelId,
   });
@@ -283,11 +283,23 @@ export function SendToTabletDialog({
 
           {/* Device List */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Available Tablets</h3>
-              <Badge variant="outline" data-testid="badge-device-count">
-                {onlineTablets.length} online
-              </Badge>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold">Available Tablets</h3>
+                <Badge variant="outline" data-testid="badge-device-count">
+                  {onlineTablets.length} online
+                </Badge>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => refetch()}
+                disabled={isRefetching}
+                data-testid="button-refresh-devices"
+                className="flex-shrink-0"
+              >
+                <RefreshCw className={`h-3 w-3 ${isRefetching ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
 
             {isLoading ? (
