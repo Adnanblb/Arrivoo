@@ -19,6 +19,7 @@ import { Tablet } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { getDeviceMetadata } from "@/lib/deviceInfo";
 
 const deviceSchema = z.object({
   deviceName: z.string().min(1, "Device name is required"),
@@ -81,12 +82,18 @@ export default function DeviceRegistration() {
   const onSubmit = async (data: DeviceForm) => {
     setIsLoading(true);
     try {
+      // Get device metadata
+      const metadata = getDeviceMetadata();
+      
       // Create device in database
       const response = await apiRequest("POST", "/api/devices", {
         hotelId: data.hotelId,
         deviceName: data.deviceName,
         deviceType: "tablet",
         isOnline: false,
+        browser: metadata.browser,
+        os: metadata.os,
+        screenSize: metadata.screenSize,
       });
       
       const device = await response.json();
@@ -105,6 +112,7 @@ export default function DeviceRegistration() {
           deviceId: device.id,
           hotelId: data.hotelId,
           deviceType: "tablet",
+          ...metadata,
         },
       });
       

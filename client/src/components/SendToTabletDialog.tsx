@@ -10,9 +10,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useQuery } from "@tanstack/react-query";
-import { Tablet, Wifi, WifiOff, CheckCircle2 } from "lucide-react";
+import { Tablet, Wifi, WifiOff, CheckCircle2, Monitor, Smartphone, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
 
 interface Device {
   id: string;
@@ -20,6 +21,10 @@ interface Device {
   deviceName: string;
   deviceType: string;
   isOnline?: boolean;
+  browser?: string;
+  os?: string;
+  screenSize?: string;
+  lastSeen?: string | Date;
 }
 
 interface SendToTabletDialogProps {
@@ -44,6 +49,29 @@ const getDashboardDeviceId = () => {
   const newId = `dashboard-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   sessionStorage.setItem("dashboard-device-id", newId);
   return newId;
+};
+
+// Helper function to get device icon based on OS
+const getDeviceIcon = (os?: string) => {
+  if (!os) return Tablet;
+  const osLower = os.toLowerCase();
+  if (osLower.includes("ios") || osLower.includes("ipad")) return Tablet;
+  if (osLower.includes("android")) return Smartphone;
+  if (osLower.includes("windows") || osLower.includes("mac") || osLower.includes("linux")) return Monitor;
+  return Tablet;
+};
+
+// Helper function to format last seen time
+const getLastSeenText = (lastSeen?: string | Date, isOnline?: boolean) => {
+  if (isOnline) return "Active now";
+  if (!lastSeen) return "Never seen";
+  
+  try {
+    const date = typeof lastSeen === 'string' ? new Date(lastSeen) : lastSeen;
+    return `Last seen ${formatDistanceToNow(date, { addSuffix: true })}`;
+  } catch {
+    return "Never seen";
+  }
 };
 
 export function SendToTabletDialog({
@@ -257,64 +285,94 @@ export function SendToTabletDialog({
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {/* Online Tablets First */}
-                {onlineTablets.map((device) => (
-                  <Card
-                    key={device.id}
-                    className={`cursor-pointer transition-colors hover-elevate ${
-                      selectedDeviceId === device.id
-                        ? "ring-2 ring-primary"
-                        : ""
-                    }`}
-                    onClick={() => setSelectedDeviceId(device.id)}
-                    data-testid={`device-card-${device.id}`}
-                  >
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                          <Tablet className="h-5 w-5 text-green-700 dark:text-green-300" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{device.deviceName}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Wifi className="h-3 w-3 text-green-500" />
-                            <span className="text-xs text-green-600 dark:text-green-400">
-                              Online
-                            </span>
+                {onlineTablets.map((device) => {
+                  const DeviceIcon = getDeviceIcon(device.os);
+                  return (
+                    <Card
+                      key={device.id}
+                      className={`cursor-pointer transition-colors hover-elevate ${
+                        selectedDeviceId === device.id
+                          ? "ring-2 ring-primary"
+                          : ""
+                      }`}
+                      onClick={() => setSelectedDeviceId(device.id)}
+                      data-testid={`device-card-${device.id}`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 flex-1">
+                            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                              <DeviceIcon className="h-5 w-5 text-green-700 dark:text-green-300" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium truncate">{device.deviceName}</p>
+                                <Badge variant="outline" className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                                  <Wifi className="h-3 w-3 mr-1" />
+                                  Online
+                                </Badge>
+                              </div>
+                              <div className="mt-1 space-y-0.5">
+                                {device.os && device.browser && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {device.browser} • {device.os}
+                                  </p>
+                                )}
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {getLastSeenText(device.lastSeen, device.isOnline)}
+                                </p>
+                              </div>
+                            </div>
                           </div>
+                          {selectedDeviceId === device.id && (
+                            <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                          )}
                         </div>
-                      </div>
-                      {selectedDeviceId === device.id && (
-                        <CheckCircle2 className="h-5 w-5 text-primary" />
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
 
                 {/* Offline Tablets */}
-                {offlineTablets.map((device) => (
-                  <Card
-                    key={device.id}
-                    className="opacity-50"
-                    data-testid={`device-card-offline-${device.id}`}
-                  >
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-muted rounded-lg">
-                          <Tablet className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{device.deviceName}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <WifiOff className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">
-                              Offline
-                            </span>
+                {offlineTablets.map((device) => {
+                  const DeviceIcon = getDeviceIcon(device.os);
+                  return (
+                    <Card
+                      key={device.id}
+                      className="opacity-60"
+                      data-testid={`device-card-offline-${device.id}`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-muted rounded-lg">
+                            <DeviceIcon className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium truncate">{device.deviceName}</p>
+                              <Badge variant="outline" className="bg-muted/50 text-muted-foreground border-muted">
+                                <WifiOff className="h-3 w-3 mr-1" />
+                                Offline
+                              </Badge>
+                            </div>
+                            <div className="mt-1 space-y-0.5">
+                              {device.os && device.browser && (
+                                <p className="text-xs text-muted-foreground">
+                                  {device.browser} • {device.os}
+                                </p>
+                              )}
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {getLastSeenText(device.lastSeen, device.isOnline)}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>

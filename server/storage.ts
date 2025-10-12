@@ -60,7 +60,7 @@ export interface IStorage {
   getDevice(id: string): Promise<Device | undefined>;
   getDevicesByHotel(hotelId: string): Promise<Device[]>;
   updateDevice(id: string, device: Partial<InsertDevice>): Promise<Device | undefined>;
-  updateDeviceSocketId(id: string, socketId: string | null, isOnline: boolean): Promise<Device | undefined>;
+  updateDeviceSocketId(id: string, socketId: string | null, isOnline: boolean, metadata?: { browser?: string; os?: string; screenSize?: string }): Promise<Device | undefined>;
   deleteDevice(id: string): Promise<void>;
 
   // Contract Assignments (send to tablet)
@@ -287,15 +287,24 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
-  async updateDeviceSocketId(id: string, socketId: string | null, isOnline: boolean): Promise<Device | undefined> {
+  async updateDeviceSocketId(id: string, socketId: string | null, isOnline: boolean, metadata?: { browser?: string; os?: string; screenSize?: string }): Promise<Device | undefined> {
+    const updateData: any = {
+      socketId,
+      isOnline,
+      lastSeen: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    // Add metadata if provided
+    if (metadata) {
+      if (metadata.browser) updateData.browser = metadata.browser;
+      if (metadata.os) updateData.os = metadata.os;
+      if (metadata.screenSize) updateData.screenSize = metadata.screenSize;
+    }
+    
     const result = await db
       .update(devices)
-      .set({
-        socketId,
-        isOnline,
-        lastSeen: new Date(),
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(devices.id, id))
       .returning();
     return result[0];

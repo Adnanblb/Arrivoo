@@ -38,10 +38,14 @@ export function setupWebSocket(server: Server) {
         
         switch (message.type) {
           case "register_device": {
-            const { deviceId, hotelId, deviceType } = message.payload;
+            const { deviceId, hotelId, deviceType, browser, os, screenSize } = message.payload;
             
-            // Update device in database
-            await storage.updateDeviceSocketId(deviceId, deviceId, true);
+            // Update device in database with metadata
+            await storage.updateDeviceSocketId(deviceId, deviceId, true, {
+              browser,
+              os,
+              screenSize,
+            });
             
             // Store connection
             currentDeviceId = deviceId;

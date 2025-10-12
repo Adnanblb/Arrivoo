@@ -7,6 +7,7 @@ import SignatureCanvas from "react-signature-canvas";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useToast } from "@/hooks/use-toast";
 import type { RegistrationContract } from "@shared/schema";
+import { getDeviceMetadata } from "@/lib/deviceInfo";
 
 export default function TabletSignature() {
   const [currentContract, setCurrentContract] = useState<RegistrationContract | null>(null);
@@ -69,12 +70,14 @@ export default function TabletSignature() {
 
     // Register device with WebSocket when connected
     if (isConnected && deviceId && hotelId) {
+      const metadata = getDeviceMetadata();
       send({
         type: "register_device",
         payload: {
           deviceId,
           hotelId,
           deviceType: "tablet",
+          ...metadata,
         },
       });
     }

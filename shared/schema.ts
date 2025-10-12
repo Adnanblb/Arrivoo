@@ -206,6 +206,13 @@ export const devices = pgTable("devices", {
   socketId: text("socket_id"), // Current WebSocket connection ID
   isOnline: boolean("is_online").default(false),
   lastSeen: timestamp("last_seen").defaultNow(),
+  
+  // Device metadata for better identification
+  browser: text("browser"), // Chrome, Safari, Firefox, etc.
+  os: text("os"), // iOS, Android, Windows, macOS, etc.
+  screenSize: text("screen_size"), // e.g., "1024x768"
+  ipAddress: text("ip_address"),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -215,6 +222,8 @@ export const insertDeviceSchema = createInsertSchema(devices).omit({
   createdAt: true,
   updatedAt: true,
   lastSeen: true,
+  socketId: true,
+  isOnline: true,
 });
 
 export type InsertDevice = z.infer<typeof insertDeviceSchema>;
