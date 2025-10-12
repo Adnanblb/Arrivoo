@@ -173,17 +173,18 @@ export class DbStorage implements IStorage {
   }
 
   async getArrivalsByHotel(hotelId: string, date?: string): Promise<Arrival[]> {
-    const conditions = [eq(arrivals.hotelId, hotelId)];
+    // If date is provided, filter by check-in date; otherwise return all arrivals
+    const query = date
+      ? db
+          .select()
+          .from(arrivals)
+          .where(and(eq(arrivals.hotelId, hotelId), eq(arrivals.checkInDate, date)))
+      : db
+          .select()
+          .from(arrivals)
+          .where(eq(arrivals.hotelId, hotelId));
     
-    if (date) {
-      conditions.push(eq(arrivals.checkInDate, date));
-    }
-    
-    return await db
-      .select()
-      .from(arrivals)
-      .where(and(...conditions))
-      .orderBy(desc(arrivals.estimatedArrivalTime));
+    return await query.orderBy(desc(arrivals.checkInDate), desc(arrivals.estimatedArrivalTime));
   }
 
   async updateArrivalCheckInStatus(id: string, contractId: string): Promise<Arrival | undefined> {
@@ -212,30 +213,30 @@ export class DbStorage implements IStorage {
   }
 
   async upsertArrival(arrival: InsertArrival): Promise<Arrival> {
-    // Check if arrival already exists by reservation number and check-in date
-    const existing = await db
-      .select()
-      .from(arrivals)
-      .where(
-        and(
-          eq(arrivals.hotelId, arrival.hotelId),
-          eq(arrivals.reservationNumber, arrival.reservationNumber),
-          eq(arrivals.checkInDate, arrival.checkInDate)
-        )
-      );
-
-    if (existing.length > 0) {
-      // Update existing arrival
-      const result = await db
-        .update(arrivals)
-        .set({ ...arrival, updatedAt: new Date() })
-        .where(eq(arrivals.id, existing[0].id))
-        .returning();
-      return result[0];
-    } else {
-      // Create new arrival
-      return await this.createArrival(arrival);
-    }
+    // Use INSERT ... ON CONFLICT DO UPDATE to handle duplicate arrivals during hourly sync
+    const result = await db
+      .insert(arrivals)
+      .values(arrival)
+      .onConflictDoUpdate({
+        target: [arrivals.hotelId, arrivals.reservationNumber, arrivals.checkInDate],
+        set: {
+          guestName: arrival.guestName,
+          email: arrival.email,
+          phoneNumber: arrival.phoneNumber,
+          address: arrival.address,
+          roomType: arrival.roomType,
+          roomNumber: arrival.roomNumber,
+          checkOutDate: arrival.checkOutDate,
+          numberOfNights: arrival.numberOfNights,
+          estimatedArrivalTime: arrival.estimatedArrivalTime,
+          pmsSource: arrival.pmsSource,
+          syncedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    
+    return result[0];
   }
 }
 

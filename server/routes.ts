@@ -229,7 +229,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/arrivals/:hotelId", async (req, res) => {
     try {
       const { hotelId } = req.params;
-      const date = req.query.date as string | undefined;
+      // Default to today if no date provided
+      const date = req.query.date 
+        ? req.query.date as string
+        : new Date().toISOString().split('T')[0];
+      
       const arrivals = await storage.getArrivalsByHotel(hotelId, date);
       res.json(arrivals);
     } catch (error) {

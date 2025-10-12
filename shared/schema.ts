@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, boolean, json } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean, json, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -156,7 +156,10 @@ export const arrivals = pgTable("arrivals", {
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  // Unique constraint to prevent duplicate arrivals during hourly sync
+  uniqueArrival: unique("unique_arrival_per_hotel").on(table.hotelId, table.reservationNumber, table.checkInDate),
+}));
 
 export const insertArrivalSchema = createInsertSchema(arrivals).omit({
   id: true,
