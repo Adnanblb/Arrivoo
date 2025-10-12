@@ -52,6 +52,7 @@ This is a professional hotel check-in platform designed to streamline guest regi
 - Session invalidation on logout removes all traces from database
 - Protected routes require valid authentication
 - Frontend route protection with automatic redirect to login
+- **Email Integration Status:** Currently using placeholder (console logging). User declined Replit's email connector. Pending manual integration with user's preferred email service (API credentials to be provided)
 
 ## User Preferences
 

@@ -42,7 +42,7 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
       }
       
       // Get hotel details
-      const hotel = await storage.getHotel(user.hotelId);
+      const hotel = user.hotelId ? await storage.getHotel(user.hotelId) : null;
       
       res.json({
         authenticated: true,
