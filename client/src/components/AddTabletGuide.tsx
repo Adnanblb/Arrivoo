@@ -9,8 +9,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tablet, QrCode, Copy, CheckCircle } from "lucide-react";
+import { Tablet, Copy, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { QRCodeSVG } from "qrcode.react";
 
 export function AddTabletGuide() {
   const [isOpen, setIsOpen] = useState(false);
@@ -90,16 +91,18 @@ export function AddTabletGuide() {
               <div className="space-y-2">
                 <p className="font-semibold text-sm">Option B: Scan QR Code</p>
                 <div className="flex items-center gap-4">
-                  <div className="p-4 bg-white rounded-lg border-2 border-muted">
-                    <QrCode className="h-32 w-32 text-muted-foreground" />
-                    <p className="text-xs text-center text-muted-foreground mt-2">
-                      QR Code placeholder
-                    </p>
+                  <div className="p-4 bg-white dark:bg-white rounded-lg border-2 border-muted" data-testid="qr-code-container">
+                    <QRCodeSVG 
+                      value={tabletUrl} 
+                      size={128}
+                      level="H"
+                      includeMargin={false}
+                    />
                   </div>
                   <div className="flex-1 text-sm text-muted-foreground">
-                    <p>Use your tablet's camera to scan this QR code</p>
+                    <p>Use your tablet's camera or QR code scanner app to scan this code</p>
                     <p className="mt-2">
-                      <strong>Note:</strong> QR code functionality requires a QR code generator library
+                      <strong>Tip:</strong> Most modern tablets can scan QR codes directly from the camera app
                     </p>
                   </div>
                 </div>
