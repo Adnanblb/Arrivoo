@@ -52,7 +52,7 @@ This is a professional hotel check-in platform designed to streamline guest regi
 - Session invalidation on logout removes all traces from database
 - Protected routes require valid authentication
 - Frontend route protection with automatic redirect to login
-- **Email Integration:** Integrated with Resend for production email delivery. OTP codes, login notifications, and password reset emails are sent via Resend API using stored secrets (RESEND_API_KEY, RESEND_FROM_EMAIL, RESEND_FROM_NAME)
+- **Email Integration:** Development mode - OTP codes are logged to server console and stored in database. For production use, integrate with email service (Resend, SendGrid, etc.). To get OTP codes: check server logs or query database directly
 
 ## User Preferences
 

@@ -1,11 +1,9 @@
 /**
  * Email Service for Arrivo Hotel Check-in System
- * Integrated with Resend for production email sending
+ * 
+ * This is a placeholder implementation that logs emails to console.
+ * In production, replace with a real email service like SendGrid, AWS SES, or Mailgun.
  */
-
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export interface EmailOptions {
   to: string;
@@ -15,45 +13,19 @@ export interface EmailOptions {
 }
 
 /**
- * Send an email using Resend
+ * Send an email (currently logs to console)
+ * For development: OTP codes are logged here and stored in database
  */
 export async function sendEmail(options: EmailOptions): Promise<void> {
-  try {
-    // Use Resend's test email for development, or verified domain for production
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
-    const fromName = process.env.RESEND_FROM_NAME || 'Arrivo';
-    
-    // Check if the from email domain is verified
-    // For unverified domains, fallback to Resend's test email
-    let actualFromEmail = fromEmail;
-    if (!fromEmail.endsWith('@resend.dev') && !fromEmail.includes('verified-domain')) {
-      console.warn(`⚠️  Email domain ${fromEmail} may not be verified. Using onboarding@resend.dev for development.`);
-      actualFromEmail = 'onboarding@resend.dev';
-    }
-    
-    const { data, error } = await resend.emails.send({
-      from: `${fromName} <${actualFromEmail}>`,
-      to: [options.to],
-      subject: options.subject,
-      html: options.html,
-      text: options.text,
-    });
-
-    if (error) {
-      console.error('❌ Email sending failed:', error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-
-    console.log('✅ Email sent successfully:', {
-      to: options.to,
-      from: `${fromName} <${actualFromEmail}>`,
-      subject: options.subject,
-      messageId: data?.id,
-    });
-  } catch (error) {
-    console.error('❌ Email error:', error);
-    throw error;
-  }
+  console.log('\n📧 EMAIL LOGGED (Development Mode):');
+  console.log('To:', options.to);
+  console.log('Subject:', options.subject);
+  console.log('---');
+  console.log(options.text || options.html);
+  console.log('---\n');
+  
+  // In production, replace with actual email sending:
+  // await emailProvider.send(options);
 }
 
 /**
