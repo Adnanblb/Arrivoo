@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar, Plus, Search } from "lucide-react";
+import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar, Plus, Search, Settings } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLocation } from "wouter";
 
@@ -142,6 +142,14 @@ export default function HotelDashboard() {
                 onClick={handleRefresh}
               >
                 <RefreshCw className="h-5 w-5" />
+              </Button>
+              <Button
+                data-testid="button-settings"
+                variant="ghost"
+                size="icon"
+                onClick={() => setLocation("/settings")}
+              >
+                <Settings className="h-5 w-5" />
               </Button>
               <Button
                 data-testid="button-toggle-theme"

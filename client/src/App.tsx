@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/Login";
 import AdminDashboard from "@/pages/AdminDashboard";
 import HotelDashboard from "@/pages/HotelDashboard";
+import HotelSettings from "@/pages/HotelSettings";
 import GuestCheckin from "@/pages/GuestCheckin";
 import NewCheckin from "@/pages/NewCheckin";
 import ContractSearch from "@/pages/ContractSearch";
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/" component={Login} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/hotel" component={HotelDashboard} />
+      <Route path="/settings" component={HotelSettings} />
       <Route path="/new-checkin" component={NewCheckin} />
       <Route path="/contracts" component={ContractSearch} />
       <Route path="/checkin/:reservationId?" component={GuestCheckin} />
