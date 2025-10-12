@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrivalsTable } from "@/components/ArrivalsTable";
 import { GuestCard } from "@/components/GuestCard";
 import { AddTabletGuide } from "@/components/AddTabletGuide";
@@ -75,6 +75,11 @@ export default function HotelDashboard() {
   const [sendToTabletGuest, setSendToTabletGuest] = useState<typeof mockArrivals[0] | null>(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+
+  // Set hotelId in localStorage for Settings page to access
+  useEffect(() => {
+    localStorage.setItem("hotelId", MOCK_HOTEL_ID);
+  }, []);
 
   const filteredArrivals = mockArrivals.filter((arrival) => {
     if (filter === "all") return true;
