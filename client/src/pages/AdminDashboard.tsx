@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { StatsCard } from "@/components/StatsCard";
 import { HotelCard } from "@/components/HotelCard";
 import { Button } from "@/components/ui/button";
@@ -79,12 +81,31 @@ export default function AdminDashboard() {
     });
   };
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/auth/logout", {});
+      return await response.json();
+    },
+    onSuccess: async () => {
+      // Invalidate auth cache to clear user state
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: "Signed Out",
+        description: "You have been successfully logged out",
+      });
+      setTimeout(() => setLocation("/"), 1000);
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: error.message || "Failed to log out",
+      });
+    },
+  });
+
   const handleLogout = () => {
-    toast({
-      title: "Signed Out",
-      description: "You have been successfully logged out",
-    });
-    setTimeout(() => setLocation("/"), 1000);
+    logoutMutation.mutate();
   };
 
   return (

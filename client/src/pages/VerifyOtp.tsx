@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,7 +68,7 @@ export default function VerifyOtp() {
       });
       return await response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.requires2FA) {
         // Navigate to 2FA verification
         setLocation(`/verify-otp?userId=${userId}&type=two_factor&requires2FA=false`);
@@ -80,7 +80,8 @@ export default function VerifyOtp() {
         setCanResend(false);
         form.reset();
       } else if (data.user) {
-        // Login successful
+        // Login successful - invalidate auth cache to refetch user
+        await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
         toast({
           title: "Login Successful",
           description: `Welcome back, ${data.user.hotelName}!`,

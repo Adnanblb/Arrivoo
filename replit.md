@@ -43,6 +43,16 @@ This is a professional hotel check-in platform designed to streamline guest regi
 - Scrollable terms display preserves formatting and ensures full readability
 - Changes saved per hotel and persist across all check-in flows
 
+### 6. Secure Authentication & Session Management
+- OTP-based login system with email verification (15-minute expiry)
+- Optional two-factor authentication (2FA) for enhanced security
+- Login notification emails with device, IP, and timestamp details
+- Comprehensive login history tracking (last 5 sessions with device info)
+- Secure session management with PostgreSQL-backed session store
+- Session invalidation on logout removes all traces from database
+- Protected routes require valid authentication
+- Frontend route protection with automatic redirect to login
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -141,6 +151,14 @@ Preferred communication style: Simple, everyday language.
 - Opera Cloud PMS integration (referenced in design guidelines but not yet implemented)
 - The application is architecturally prepared for PMS integration through the storage abstraction layer
 
-**Session Management**
-- connect-pg-simple configured for PostgreSQL-based session storage
-- Session infrastructure is set up but authentication/authorization implementation is pending
+**Session Management & Authentication**
+- Production-ready secure session management with PostgreSQL-backed session store via connect-pg-simple
+- Express-session configured with mandatory SESSION_SECRET enforcement (server fails to start if not set)
+- Sessions use actual express-session IDs (req.sessionID) stored in login_history for proper tracking and deletion
+- Secure logout: Verifies session ownership, deletes from PostgreSQL session store, updates audit trail
+- requireAuth middleware protects all sensitive routes from unauthorized access
+- Frontend AuthContext with proper 401 handling and ProtectedRoute component for route protection
+- OTP-based two-factor authentication (2FA) with email delivery
+- Login notification emails sent on every successful login with device/IP/timestamp details
+- Comprehensive login history tracking with device info, IP addresses, and session management
+- Session invalidation on logout properly removes sessions from both memory and database

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ArrivalsTable } from "@/components/ArrivalsTable";
 import { GuestCard } from "@/components/GuestCard";
 import { AddTabletGuide } from "@/components/AddTabletGuide";
@@ -136,12 +137,31 @@ export default function HotelDashboard() {
     });
   };
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/auth/logout", {});
+      return await response.json();
+    },
+    onSuccess: async () => {
+      // Invalidate auth cache to clear user state
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: "Signed Out",
+        description: "You have been successfully logged out",
+      });
+      setTimeout(() => setLocation("/"), 1000);
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: error.message || "Failed to log out",
+      });
+    },
+  });
+
   const handleLogout = () => {
-    toast({
-      title: "Signed Out",
-      description: "You have been successfully logged out",
-    });
-    setTimeout(() => setLocation("/"), 1000);
+    logoutMutation.mutate();
   };
 
   return (
