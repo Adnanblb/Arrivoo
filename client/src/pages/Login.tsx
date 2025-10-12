@@ -162,9 +162,6 @@ export default function Login() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-sm text-muted-foreground">
-          Demo credentials: admin@hotel.com / hotel@hotel.com
-        </p>
       </div>
     </div>
   );
