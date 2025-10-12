@@ -3,8 +3,15 @@ import { ArrivalsTable } from "@/components/ArrivalsTable";
 import { GuestCard } from "@/components/GuestCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Moon, Sun, LogOut, RefreshCw, Download } from "lucide-react";
+import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLocation } from "wouter";
 
@@ -60,6 +67,7 @@ const mockArrivals = [
 export default function HotelDashboard() {
   const { theme, toggleTheme } = useTheme();
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
+  const [selectedGuest, setSelectedGuest] = useState<typeof mockArrivals[0] | null>(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -80,10 +88,9 @@ export default function HotelDashboard() {
   const handleViewDetails = (id: string) => {
     const guest = mockArrivals.find((a) => a.id === id);
     console.log("View details:", id);
-    toast({
-      title: "Guest Details",
-      description: `Viewing details for ${guest?.guestName}`,
-    });
+    if (guest) {
+      setSelectedGuest(guest);
+    }
   };
 
   const handleRefresh = () => {
@@ -214,6 +221,115 @@ export default function HotelDashboard() {
           )}
         </div>
       </main>
+
+      {/* Guest Details Dialog */}
+      <Dialog open={!!selectedGuest} onOpenChange={(open) => !open && setSelectedGuest(null)}>
+        <DialogContent data-testid="dialog-guest-details">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">{selectedGuest?.guestName}</DialogTitle>
+            <DialogDescription>Reservation Details</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                  <Calendar className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Reservation Number</p>
+                  <p className="font-medium" data-testid="text-reservation-number">
+                    {selectedGuest?.reservationNumber}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                  <MapPin className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Room Number</p>
+                  <p className="font-medium" data-testid="text-room-number">
+                    {selectedGuest?.roomNumber}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                  <Calendar className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Check-in Date</p>
+                  <p className="font-medium" data-testid="text-checkin-date">
+                    {selectedGuest?.checkInDate}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                  <Calendar className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Check-out Date</p>
+                  <p className="font-medium" data-testid="text-checkout-date">
+                    {selectedGuest?.checkOutDate}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                  <Mail className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Email</p>
+                  <p className="font-medium" data-testid="text-guest-email">
+                    {(selectedGuest?.guestName?.toLowerCase()?.replace(' ', '.')) ?? 'guest'}@email.com
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                  <Phone className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Phone</p>
+                  <p className="font-medium" data-testid="text-guest-phone">
+                    +1 (555) 123-4567
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button 
+                data-testid="button-send-to-tablet-dialog"
+                onClick={() => {
+                  if (selectedGuest) {
+                    handleSendToTablet(selectedGuest.id);
+                    setSelectedGuest(null);
+                  }
+                }}
+                className="flex-1"
+              >
+                Send to Tablet
+              </Button>
+              <Button 
+                data-testid="button-close-dialog"
+                variant="outline" 
+                onClick={() => setSelectedGuest(null)}
+                className="flex-1"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
