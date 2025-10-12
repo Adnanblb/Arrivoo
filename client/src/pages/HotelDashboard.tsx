@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrivalsTable } from "@/components/ArrivalsTable";
 import { GuestCard } from "@/components/GuestCard";
 import { AddTabletGuide } from "@/components/AddTabletGuide";
+import { SendToTabletDialog } from "@/components/SendToTabletDialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -17,6 +18,8 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useLocation } from "wouter";
 
 // TODO: Remove mock data when implementing real backend
+const MOCK_HOTEL_ID = "89e84b73-cca7-4bd4-9dba-af421b2805f6"; // Grand Plaza Hotel
+
 const mockArrivals = [
   {
     id: "1",
@@ -69,6 +72,7 @@ export default function HotelDashboard() {
   const { theme, toggleTheme } = useTheme();
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
   const [selectedGuest, setSelectedGuest] = useState<typeof mockArrivals[0] | null>(null);
+  const [sendToTabletGuest, setSendToTabletGuest] = useState<typeof mockArrivals[0] | null>(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -79,11 +83,9 @@ export default function HotelDashboard() {
 
   const handleSendToTablet = (id: string) => {
     const guest = mockArrivals.find((a) => a.id === id);
-    console.log("Send to tablet:", id);
-    toast({
-      title: "Sent to Tablet",
-      description: `Check-in form sent to tablet for ${guest?.guestName}`,
-    });
+    if (guest) {
+      setSendToTabletGuest(guest);
+    }
   };
 
   const handleViewDetails = (id: string) => {
@@ -351,6 +353,16 @@ export default function HotelDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Send to Tablet Dialog */}
+      {sendToTabletGuest && (
+        <SendToTabletDialog
+          isOpen={!!sendToTabletGuest}
+          onClose={() => setSendToTabletGuest(null)}
+          contractData={sendToTabletGuest}
+          hotelId={MOCK_HOTEL_ID}
+        />
+      )}
     </div>
   );
 }
