@@ -1,13 +1,48 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tablet, CheckCircle } from "lucide-react";
+import { Tablet, CheckCircle, ScrollText } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useToast } from "@/hooks/use-toast";
-import type { RegistrationContract } from "@shared/schema";
+import type { RegistrationContract, Hotel } from "@shared/schema";
 import { getDeviceMetadata } from "@/lib/deviceInfo";
+
+const defaultContractTerms = `REGISTRATION AGREEMENT
+
+By signing this registration form, the guest acknowledges and agrees to the following terms and conditions:
+
+1. CHECK-IN / CHECK-OUT
+   - Check-in time: 3:00 PM
+   - Check-out time: 11:00 AM
+   - Early check-in or late check-out may be available upon request and subject to availability
+
+2. PAYMENT TERMS
+   - All charges must be settled at check-out unless other arrangements have been made
+   - The guest is responsible for all charges incurred during their stay
+   - A valid credit card or deposit may be required to cover incidental charges
+
+3. CANCELLATION POLICY
+   - Cancellations must be made 24 hours prior to arrival to avoid charges
+   - No-shows will be charged the full amount of the reservation
+
+4. GUEST RESPONSIBILITIES
+   - Guests are responsible for any damage to hotel property during their stay
+   - Smoking is prohibited in all guest rooms and indoor areas
+   - Guests must comply with all hotel policies and local regulations
+
+5. LIABILITY
+   - The hotel is not responsible for loss or damage to personal property
+   - Guests should use in-room safes for valuables
+   - The hotel reserves the right to refuse service to anyone
+
+6. PRIVACY
+   - Guest information will be kept confidential and used only for hotel operations
+   - Information may be shared with authorities when required by law
+
+I have read and agree to the above terms and conditions.`;
 
 export default function TabletSignature() {
   const [currentContract, setCurrentContract] = useState<RegistrationContract | null>(null);
@@ -22,6 +57,19 @@ export default function TabletSignature() {
   const deviceId = localStorage.getItem("deviceId");
   const deviceName = localStorage.getItem("deviceName");
   const hotelId = localStorage.getItem("hotelId");
+
+  // Fetch hotel details to get custom contract terms
+  const { data: hotel } = useQuery<Hotel>({
+    queryKey: ["/api/hotels", hotelId],
+    queryFn: async () => {
+      const response = await fetch(`/api/hotels/${hotelId}`);
+      if (!response.ok) throw new Error("Failed to fetch hotel");
+      return response.json();
+    },
+    enabled: !!hotelId,
+  });
+
+  const contractTerms = hotel?.contractTerms || defaultContractTerms;
 
   // Initialize WebSocket
   const { send, isConnected } = useWebSocket({
@@ -250,6 +298,29 @@ export default function TabletSignature() {
                 </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Contract Terms */}
+        <Card data-testid="card-contract-terms">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <ScrollText className="h-5 w-5 text-primary" />
+              <CardTitle>Terms and Conditions</CardTitle>
+            </div>
+            <CardDescription>
+              Please review before signing
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="border rounded-md p-4 bg-muted/30 max-h-80 overflow-y-auto">
+              <pre className="whitespace-pre-wrap text-sm font-sans">
+                {contractTerms}
+              </pre>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">
+              By signing below, you acknowledge that you have read and agree to the above terms and conditions.
+            </p>
           </CardContent>
         </Card>
 
