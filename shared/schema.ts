@@ -29,6 +29,7 @@ export const hotels = pgTable("hotels", {
   address: text("address"),
   phone: text("phone"),
   email: text("email"),
+  contractTerms: text("contract_terms"), // Custom contract terms for guest registration
   createdAt: timestamp("created_at").defaultNow(),
 });
 
