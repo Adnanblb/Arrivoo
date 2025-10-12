@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { PmsFactory } from "./pms/pms-factory";
+import { PdfGenerator } from "./services/pdf-generator";
 import {
   pmsLookupSchema,
   insertRegistrationContractSchema,
@@ -121,7 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Download Contract as PDF (placeholder - will implement PDF generation)
+  // Download Contract as PDF
   app.get("/api/contracts/:id/pdf", async (req, res) => {
     try {
       const { id } = req.params;
@@ -131,14 +132,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Contract not found" });
       }
 
-      // For now, return JSON (PDF generation will be implemented)
-      res.json({
-        message: "PDF generation coming soon",
-        contract,
-      });
+      // Generate and stream PDF to response
+      await PdfGenerator.generateContractPdf(contract, res);
     } catch (error) {
       console.error("Generate PDF error:", error);
-      res.status(500).json({ error: "Failed to generate PDF" });
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Failed to generate PDF" });
+      }
     }
   });
 
@@ -222,6 +222,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get PMS types error:", error);
       res.status(500).json({ error: "Failed to get PMS types" });
+    }
+  });
+
+  // Arrivals Management - Get today's arrivals for a hotel
+  app.get("/api/arrivals/:hotelId", async (req, res) => {
+    try {
+      const { hotelId } = req.params;
+      const date = req.query.date as string | undefined;
+      const arrivals = await storage.getArrivalsByHotel(hotelId, date);
+      res.json(arrivals);
+    } catch (error) {
+      console.error("Get arrivals error:", error);
+      res.status(500).json({ error: "Failed to get arrivals" });
     }
   });
 

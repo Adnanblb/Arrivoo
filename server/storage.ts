@@ -5,6 +5,7 @@ import {
   hotels,
   pmsConfigurations,
   registrationContracts,
+  arrivals,
   type User,
   type InsertUser,
   type Hotel,
@@ -14,6 +15,8 @@ import {
   type RegistrationContract,
   type InsertRegistrationContract,
   type SearchContracts,
+  type Arrival,
+  type InsertArrival,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -38,6 +41,13 @@ export interface IStorage {
   getContract(id: string): Promise<RegistrationContract | undefined>;
   searchContracts(params: SearchContracts): Promise<RegistrationContract[]>;
   getRecentContracts(hotelId: string, limit?: number): Promise<RegistrationContract[]>;
+
+  // Arrivals management
+  createArrival(arrival: InsertArrival): Promise<Arrival>;
+  getArrivalsByHotel(hotelId: string, date?: string): Promise<Arrival[]>;
+  updateArrivalCheckInStatus(id: string, contractId: string): Promise<Arrival | undefined>;
+  deleteOldArrivals(hotelId: string, beforeDate: string): Promise<void>;
+  upsertArrival(arrival: InsertArrival): Promise<Arrival>;
 }
 
 export class DbStorage implements IStorage {
@@ -154,6 +164,78 @@ export class DbStorage implements IStorage {
       .where(eq(registrationContracts.hotelId, hotelId))
       .orderBy(desc(registrationContracts.registeredAt))
       .limit(limit);
+  }
+
+  // Arrivals methods
+  async createArrival(arrival: InsertArrival): Promise<Arrival> {
+    const result = await db.insert(arrivals).values(arrival).returning();
+    return result[0];
+  }
+
+  async getArrivalsByHotel(hotelId: string, date?: string): Promise<Arrival[]> {
+    const conditions = [eq(arrivals.hotelId, hotelId)];
+    
+    if (date) {
+      conditions.push(eq(arrivals.checkInDate, date));
+    }
+    
+    return await db
+      .select()
+      .from(arrivals)
+      .where(and(...conditions))
+      .orderBy(desc(arrivals.estimatedArrivalTime));
+  }
+
+  async updateArrivalCheckInStatus(id: string, contractId: string): Promise<Arrival | undefined> {
+    const result = await db
+      .update(arrivals)
+      .set({
+        hasCheckedIn: true,
+        checkedInAt: new Date(),
+        contractId: contractId,
+        updatedAt: new Date(),
+      })
+      .where(eq(arrivals.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteOldArrivals(hotelId: string, beforeDate: string): Promise<void> {
+    await db
+      .delete(arrivals)
+      .where(
+        and(
+          eq(arrivals.hotelId, hotelId),
+          like(arrivals.checkInDate, `%${beforeDate}%`)
+        )
+      );
+  }
+
+  async upsertArrival(arrival: InsertArrival): Promise<Arrival> {
+    // Check if arrival already exists by reservation number and check-in date
+    const existing = await db
+      .select()
+      .from(arrivals)
+      .where(
+        and(
+          eq(arrivals.hotelId, arrival.hotelId),
+          eq(arrivals.reservationNumber, arrival.reservationNumber),
+          eq(arrivals.checkInDate, arrival.checkInDate)
+        )
+      );
+
+    if (existing.length > 0) {
+      // Update existing arrival
+      const result = await db
+        .update(arrivals)
+        .set({ ...arrival, updatedAt: new Date() })
+        .where(eq(arrivals.id, existing[0].id))
+        .returning();
+      return result[0];
+    } else {
+      // Create new arrival
+      return await this.createArrival(arrival);
+    }
   }
 }
 

@@ -123,6 +123,51 @@ export const searchContractsSchema = z.object({
 
 export type SearchContracts = z.infer<typeof searchContractsSchema>;
 
+// Arrivals table - stores synced arrival data from PMS
+export const arrivals = pgTable("arrivals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  hotelId: varchar("hotel_id").notNull(),
+  
+  // Guest Information (from PMS)
+  reservationNumber: text("reservation_number").notNull(),
+  guestName: text("guest_name").notNull(),
+  email: text("email"),
+  phoneNumber: text("phone_number"),
+  address: text("address"),
+  
+  // Room Details
+  roomType: text("room_type"),
+  roomNumber: text("room_number"),
+  
+  // Dates
+  checkInDate: text("check_in_date").notNull(),
+  checkOutDate: text("check_out_date").notNull(),
+  numberOfNights: integer("number_of_nights"),
+  estimatedArrivalTime: text("estimated_arrival_time"),
+  
+  // PMS sync tracking
+  pmsSource: text("pms_source").notNull(), // opera_cloud, protel, cloudbeds
+  syncedAt: timestamp("synced_at").defaultNow(),
+  
+  // Status tracking
+  hasCheckedIn: boolean("has_checked_in").default(false),
+  checkedInAt: timestamp("checked_in_at"),
+  contractId: varchar("contract_id"), // Link to registration contract if checked in
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertArrivalSchema = createInsertSchema(arrivals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  syncedAt: true,
+});
+
+export type InsertArrival = z.infer<typeof insertArrivalSchema>;
+export type Arrival = typeof arrivals.$inferSelect;
+
 // PMS Lookup Request schema
 export const pmsLookupSchema = z.object({
   confirmationNumber: z.string().min(1, "Confirmation number is required"),

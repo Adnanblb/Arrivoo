@@ -1,4 +1,4 @@
-import type { IPmsConnector } from "../types";
+import type { IPmsConnector, PmsArrival } from "../types";
 import type { PmsReservation } from "@shared/schema";
 
 // Cloudbeds PMS Connector
@@ -42,6 +42,34 @@ export class CloudbedsConnector implements IPmsConnector {
     } catch (error) {
       console.error("Cloudbeds lookup error:", error);
       return null;
+    }
+  }
+
+  async getArrivals(date: Date): Promise<PmsArrival[]> {
+    try {
+      // In production, this would call Cloudbeds' arrivals API
+      const dateStr = date.toISOString().split('T')[0];
+      const checkout = new Date(date);
+      checkout.setDate(date.getDate() + 4);
+      const checkoutStr = checkout.toISOString().split('T')[0];
+      
+      return [
+        {
+          reservationNumber: `CB-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+          guestName: "James Taylor",
+          email: "james.t@email.com",
+          phoneNumber: "+1 (555) 567-8902",
+          roomType: "Standard Double",
+          roomNumber: "220",
+          checkInDate: dateStr,
+          checkOutDate: checkoutStr,
+          numberOfNights: 4,
+          estimatedArrivalTime: "13:00",
+        },
+      ];
+    } catch (error) {
+      console.error("Cloudbeds getArrivals error:", error);
+      return [];
     }
   }
 
