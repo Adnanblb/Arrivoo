@@ -288,19 +288,38 @@ export class DbStorage implements IStorage {
   ): Promise<RegistrationContract | undefined> {
     console.log("[Storage] updateContractSignature called with:", {
       id,
+      idType: typeof id,
+      idLength: id?.length,
       email: email || "NOT_PROVIDED",
       phone: phone || "NOT_PROVIDED",
-      hasSignature: !!signatureDataUrl
+      hasSignature: !!signatureDataUrl,
+      signatureLength: signatureDataUrl?.length
     });
     
-    // Build update object - must include ALL fields we want to update
+    // First, check if contract exists using Drizzle
+    const existingContract = await db
+      .select()
+      .from(registrationContracts)
+      .where(eq(registrationContracts.id, id));
+    
+    console.log("[Storage] Contract exists check:", {
+      found: existingContract.length > 0,
+      contractId: existingContract[0]?.id,
+      currentStatus: existingContract[0]?.status
+    });
+    
+    if (existingContract.length === 0) {
+      console.error("[Storage] ERROR: Contract not found with id:", id);
+      return undefined;
+    }
+    
+    // Use Drizzle ORM update with explicit field setting
     const updateData: any = {
-      signature_data_url: signatureDataUrl,
-      status: "completed",
-      updated_at: new Date()
+      signatureDataUrl,
+      status: "completed" as const,
+      updatedAt: new Date()
     };
     
-    // Always update email and phone if provided (including empty strings)
     if (email !== undefined && email !== null) {
       updateData.email = email;
     }
@@ -309,58 +328,27 @@ export class DbStorage implements IStorage {
       updateData.phone = phone;
     }
     
-    console.log("[Storage] About to update with data:", JSON.stringify(updateData));
-    
-    // Use raw SQL to ensure update works
-    const result = await db.execute(sql`
-      UPDATE registration_contracts 
-      SET 
-        signature_data_url = ${signatureDataUrl},
-        status = 'completed',
-        email = ${email || null},
-        phone = ${phone || null},
-        updated_at = NOW()
-      WHERE id = ${id}
-      RETURNING *
-    `);
-    
-    console.log("[Storage] Raw SQL update result:", {
-      rowCount: result.rowCount,
-      rows: result.rows.length
+    console.log("[Storage] Updating with data:", {
+      ...updateData,
+      signatureLength: signatureDataUrl?.length
     });
     
-    if (result.rows.length > 0) {
-      const row = result.rows[0] as any;
-      console.log("[Storage] Updated contract:", {
-        id: row.id,
-        email: row.email,
-        phone: row.phone,
-        status: row.status
-      });
-      
-      // Map snake_case to camelCase
-      return {
-        ...row,
-        guestName: row.guest_name,
-        idNumber: row.id_number,
-        reservationNumber: row.reservation_number,
-        confirmationNumber: row.confirmation_number,
-        roomNumber: row.room_number,
-        roomType: row.room_type,
-        arrivalDate: row.arrival_date,
-        departureDate: row.departure_date,
-        numberOfNights: row.number_of_nights,
-        signatureDataUrl: row.signature_data_url,
-        registeredAt: row.registered_at,
-        registeredBy: row.registered_by,
-        pmsSource: row.pms_source,
-        pmsReservationId: row.pms_reservation_id,
-        specialRequests: row.special_requests,
-        numberOfGuests: row.number_of_guests,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        hotelId: row.hotel_id
-      } as RegistrationContract;
+    const result = await db
+      .update(registrationContracts)
+      .set(updateData)
+      .where(eq(registrationContracts.id, id))
+      .returning();
+    
+    console.log("[Storage] Drizzle update result:", {
+      rowsAffected: result.length,
+      updatedId: result[0]?.id,
+      updatedEmail: result[0]?.email,
+      updatedPhone: result[0]?.phone,
+      updatedStatus: result[0]?.status
+    });
+    
+    if (result.length > 0) {
+      return result[0];
     }
     
     return undefined;

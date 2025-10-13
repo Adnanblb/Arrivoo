@@ -100,20 +100,80 @@ export default function HotelDashboard() {
     queryKey: ['/api/pms-config', MOCK_HOTEL_ID],
   });
 
-  const filteredArrivals = mockArrivals.filter((arrival) => {
+  // Fetch real arrivals from API
+  const { data: apiArrivals = [], refetch: refetchArrivals } = useQuery<any[]>({
+    queryKey: ['/api/arrivals', MOCK_HOTEL_ID],
+  });
+
+  // Map API arrivals to the format expected by ArrivalsTable
+  const arrivals = apiArrivals.map(arrival => ({
+    id: arrival.id, // This is the UUID from database
+    guestName: arrival.guestName || arrival.guest_name,
+    reservationNumber: arrival.reservationNumber || arrival.reservation_number,
+    checkInDate: arrival.checkInDate || arrival.check_in_date,
+    checkOutDate: arrival.checkOutDate || arrival.check_out_date,
+    roomNumber: arrival.roomNumber || arrival.room_number,
+    status: arrival.hasCheckedIn || arrival.has_checked_in ? "completed" as const : "pending" as const,
+  }));
+
+  const filteredArrivals = arrivals.filter((arrival) => {
     if (filter === "all") return true;
     return arrival.status === filter;
   });
 
-  const handleSendToTablet = (id: string) => {
-    const guest = mockArrivals.find((a) => a.id === id);
-    if (guest) {
-      setSendToTabletGuest(guest);
+  const handleSendToTablet = async (id: string) => {
+    const arrival = arrivals.find((a) => a.id === id);
+    if (!arrival) return;
+
+    // Check if arrival already has a contract in the database
+    const arrivalData = apiArrivals.find(a => a.id === id);
+    
+    try {
+      let contractId = arrivalData?.contractId || arrivalData?.contract_id;
+      
+      if (!contractId) {
+        // Create a contract from the arrival data
+        const contractData = {
+          hotelId: MOCK_HOTEL_ID,
+          guestName: arrivalData.guestName || arrivalData.guest_name,
+          email: arrivalData.email || "",
+          phone: arrivalData.phoneNumber || arrivalData.phone_number || "",
+          idNumber: "",
+          reservationNumber: arrivalData.reservationNumber || arrivalData.reservation_number,
+          confirmationNumber: arrivalData.reservationNumber || arrivalData.reservation_number,
+          roomNumber: arrivalData.roomNumber || arrivalData.room_number,
+          roomType: arrivalData.roomType || arrivalData.room_type || "",
+          arrivalDate: arrivalData.checkInDate || arrivalData.check_in_date,
+          departureDate: arrivalData.checkOutDate || arrivalData.check_out_date,
+          numberOfNights: arrivalData.numberOfNights || arrivalData.number_of_nights || 1,
+          status: "pending",
+        };
+        
+        const response = await apiRequest("POST", "/api/contracts", contractData);
+        const contract = await response.json();
+        contractId = contract.id;
+        
+        // Contract created successfully, will use its ID
+        console.log("Contract created:", contractId);
+      }
+      
+      // Pass the arrival data with the contract ID
+      setSendToTabletGuest({
+        ...arrival,
+        id: contractId, // Use contract ID, not arrival ID!
+      });
+    } catch (error) {
+      console.error("Failed to create contract:", error);
+      toast({
+        title: "Error",
+        description: "Failed to prepare contract for tablet",
+        variant: "destructive",
+      });
     }
   };
 
   const handleViewDetails = (id: string) => {
-    const guest = mockArrivals.find((a) => a.id === id);
+    const guest = arrivals.find((a) => a.id === id);
     console.log("View details:", id);
     if (guest) {
       setSelectedGuest(guest);
@@ -123,6 +183,7 @@ export default function HotelDashboard() {
   const handleRefresh = () => {
     const pmsName = pmsConfig ? formatPmsName(pmsConfig.pmsType) : "PMS";
     console.log(`Refresh arrivals from ${pmsName}`);
+    refetchArrivals();
     toast({
       title: "Refreshing Data",
       description: `Syncing with ${pmsName}...`,
