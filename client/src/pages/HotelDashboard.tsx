@@ -152,9 +152,6 @@ export default function HotelDashboard() {
         const response = await apiRequest("POST", "/api/contracts", contractData);
         const contract = await response.json();
         contractId = contract.id;
-        
-        // Contract created successfully, will use its ID
-        console.log("Contract created:", contractId);
       }
       
       // Pass the arrival data with the contract ID
@@ -174,7 +171,6 @@ export default function HotelDashboard() {
 
   const handleViewDetails = (id: string) => {
     const guest = arrivals.find((a) => a.id === id);
-    console.log("View details:", id);
     if (guest) {
       setSelectedGuest(guest);
     }
@@ -182,7 +178,6 @@ export default function HotelDashboard() {
 
   const handleRefresh = () => {
     const pmsName = pmsConfig ? formatPmsName(pmsConfig.pmsType) : "PMS";
-    console.log(`Refresh arrivals from ${pmsName}`);
     refetchArrivals();
     toast({
       title: "Refreshing Data",
@@ -191,7 +186,6 @@ export default function HotelDashboard() {
   };
 
   const handleExport = () => {
-    console.log("Export daily report");
     toast({
       title: "Exporting Report",
       description: "Preparing daily arrivals report for download...",

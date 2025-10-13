@@ -286,34 +286,18 @@ export class DbStorage implements IStorage {
     email?: string, 
     phone?: string
   ): Promise<RegistrationContract | undefined> {
-    console.log("[Storage] updateContractSignature called with:", {
-      id,
-      idType: typeof id,
-      idLength: id?.length,
-      email: email || "NOT_PROVIDED",
-      phone: phone || "NOT_PROVIDED",
-      hasSignature: !!signatureDataUrl,
-      signatureLength: signatureDataUrl?.length
-    });
-    
-    // First, check if contract exists using Drizzle
+    // First, check if contract exists
     const existingContract = await db
       .select()
       .from(registrationContracts)
       .where(eq(registrationContracts.id, id));
     
-    console.log("[Storage] Contract exists check:", {
-      found: existingContract.length > 0,
-      contractId: existingContract[0]?.id,
-      currentStatus: existingContract[0]?.status
-    });
-    
     if (existingContract.length === 0) {
-      console.error("[Storage] ERROR: Contract not found with id:", id);
+      console.error("[Storage] Contract not found with id:", id);
       return undefined;
     }
     
-    // Use Drizzle ORM update with explicit field setting
+    // Build update object with signature and optional contact info
     const updateData: any = {
       signatureDataUrl,
       status: "completed" as const,
@@ -328,30 +312,13 @@ export class DbStorage implements IStorage {
       updateData.phone = phone;
     }
     
-    console.log("[Storage] Updating with data:", {
-      ...updateData,
-      signatureLength: signatureDataUrl?.length
-    });
-    
     const result = await db
       .update(registrationContracts)
       .set(updateData)
       .where(eq(registrationContracts.id, id))
       .returning();
     
-    console.log("[Storage] Drizzle update result:", {
-      rowsAffected: result.length,
-      updatedId: result[0]?.id,
-      updatedEmail: result[0]?.email,
-      updatedPhone: result[0]?.phone,
-      updatedStatus: result[0]?.status
-    });
-    
-    if (result.length > 0) {
-      return result[0];
-    }
-    
-    return undefined;
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async searchContracts(params: SearchContracts): Promise<RegistrationContract[]> {

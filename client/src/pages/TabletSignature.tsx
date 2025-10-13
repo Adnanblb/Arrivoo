@@ -78,12 +78,10 @@ export default function TabletSignature() {
   // Initialize WebSocket
   const { send, isConnected } = useWebSocket({
     onMessage: (message) => {
-      console.log("Received message:", message);
-      
       if (message.type === "receive_contract") {
         const { contractId, assignmentId, contract } = message.payload;
         setCurrentContract(contract);
-        setAssignmentId(assignmentId || contractId); // Use assignmentId if provided, fallback to contractId
+        setAssignmentId(assignmentId || contractId);
         setIsSigned(false);
         setEmail(contract.email || "");
         setPhone(contract.phone || "");
@@ -106,11 +104,6 @@ export default function TabletSignature() {
             assignmentId: assignmentId || contractId,
           },
         });
-      }
-      
-      if (message.type === "contract_status_update") {
-        // Handle status updates from other devices
-        console.log("Contract status update:", message.payload);
       }
     },
   });
