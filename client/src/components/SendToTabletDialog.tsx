@@ -102,7 +102,7 @@ export function SendToTabletDialog({
         const deviceIds = new Set<string>(
           message.payload.devices
             .filter((d: any) => d.isOnline)
-            .map((d: any) => d.deviceId as string)
+            .map((d: any) => d.id as string)
         );
         setOnlineDevices(deviceIds);
       }
