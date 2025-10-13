@@ -147,14 +147,6 @@ export default function TabletSignature() {
 
     const signatureDataUrl = signaturePad.toDataURL();
     
-    console.log("[Tablet] Sending contract_signed with:", {
-      contractId: currentContract?.id,
-      assignmentId,
-      email,
-      phone,
-      hasSignature: !!signatureDataUrl
-    });
-    
     // Send signature to server via WebSocket with updated contact info
     send({
       type: "contract_signed",

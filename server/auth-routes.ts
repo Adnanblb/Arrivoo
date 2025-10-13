@@ -130,8 +130,6 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
         // Update last login
         await storage.updateUserLastLogin(user.id);
         
-        console.log(`✅ Login successful for ${user.email}, session ${sessionId} created`);
-        
         res.json({
           success: true,
           user: {

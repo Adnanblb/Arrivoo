@@ -151,14 +151,6 @@ export function setupWebSocket(server: Server) {
           case "contract_signed": {
             const { contractId, assignmentId, signatureDataUrl, email, phone } = message.payload;
             
-            console.log("[WebSocket] Contract signed payload:", {
-              contractId,
-              assignmentId,
-              hasSignature: !!signatureDataUrl,
-              email,
-              phone
-            });
-            
             // Update contract with signature and contact information
             await storage.updateContractSignature(contractId, signatureDataUrl, email, phone);
             
