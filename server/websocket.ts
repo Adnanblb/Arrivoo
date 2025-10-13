@@ -92,15 +92,17 @@ export function setupWebSocket(server: Server) {
             const targetConnection = deviceConnections.get(deviceId);
             if (targetConnection && targetConnection.ws.readyState === WebSocket.OPEN) {
               // Send contract to target device
+              // IMPORTANT: Send the ACTUAL contract.id (UUID), not the assignment ID
               targetConnection.ws.send(JSON.stringify({
                 type: "receive_contract",
                 payload: {
-                  contractId,
+                  contractId: contract.id, // Use contract's actual UUID, not assignment ID
+                  assignmentId: contractId, // Keep assignment ID for tracking
                   contract
                 }
               }));
               
-              console.log(`Contract ${contractId} sent to device ${deviceId}`);
+              console.log(`Contract ${contract.id} (assignment ${contractId}) sent to device ${deviceId}`);
               
               // Send confirmation back to sender
               ws.send(JSON.stringify({
@@ -147,7 +149,18 @@ export function setupWebSocket(server: Server) {
           }
 
           case "contract_signed": {
-            const { contractId, assignmentId, signatureDataUrl } = message.payload;
+            const { contractId, assignmentId, signatureDataUrl, email, phone } = message.payload;
+            
+            console.log("[WebSocket] Contract signed payload:", {
+              contractId,
+              assignmentId,
+              hasSignature: !!signatureDataUrl,
+              email,
+              phone
+            });
+            
+            // Update contract with signature and contact information
+            await storage.updateContractSignature(contractId, signatureDataUrl, email, phone);
             
             // Update assignment status
             await storage.updateContractAssignmentStatus(
@@ -164,7 +177,9 @@ export function setupWebSocket(server: Server) {
                   contractId,
                   assignmentId,
                   status: "signed",
-                  signatureDataUrl
+                  signatureDataUrl,
+                  email,
+                  phone
                 }
               });
             }

@@ -68,6 +68,7 @@ export interface IStorage {
   getContract(id: string): Promise<RegistrationContract | undefined>;
   searchContracts(params: SearchContracts): Promise<RegistrationContract[]>;
   getRecentContracts(hotelId: string, limit?: number): Promise<RegistrationContract[]>;
+  updateContractSignature(id: string, signatureDataUrl: string, email?: string, phone?: string): Promise<RegistrationContract | undefined>;
 
   // Arrivals management
   createArrival(arrival: InsertArrival): Promise<Arrival>;
@@ -277,6 +278,92 @@ export class DbStorage implements IStorage {
       .from(registrationContracts)
       .where(eq(registrationContracts.id, id));
     return result[0];
+  }
+
+  async updateContractSignature(
+    id: string, 
+    signatureDataUrl: string, 
+    email?: string, 
+    phone?: string
+  ): Promise<RegistrationContract | undefined> {
+    console.log("[Storage] updateContractSignature called with:", {
+      id,
+      email: email || "NOT_PROVIDED",
+      phone: phone || "NOT_PROVIDED",
+      hasSignature: !!signatureDataUrl
+    });
+    
+    // Build update object - must include ALL fields we want to update
+    const updateData: any = {
+      signature_data_url: signatureDataUrl,
+      status: "completed",
+      updated_at: new Date()
+    };
+    
+    // Always update email and phone if provided (including empty strings)
+    if (email !== undefined && email !== null) {
+      updateData.email = email;
+    }
+    
+    if (phone !== undefined && phone !== null) {
+      updateData.phone = phone;
+    }
+    
+    console.log("[Storage] About to update with data:", JSON.stringify(updateData));
+    
+    // Use raw SQL to ensure update works
+    const result = await db.execute(sql`
+      UPDATE registration_contracts 
+      SET 
+        signature_data_url = ${signatureDataUrl},
+        status = 'completed',
+        email = ${email || null},
+        phone = ${phone || null},
+        updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `);
+    
+    console.log("[Storage] Raw SQL update result:", {
+      rowCount: result.rowCount,
+      rows: result.rows.length
+    });
+    
+    if (result.rows.length > 0) {
+      const row = result.rows[0] as any;
+      console.log("[Storage] Updated contract:", {
+        id: row.id,
+        email: row.email,
+        phone: row.phone,
+        status: row.status
+      });
+      
+      // Map snake_case to camelCase
+      return {
+        ...row,
+        guestName: row.guest_name,
+        idNumber: row.id_number,
+        reservationNumber: row.reservation_number,
+        confirmationNumber: row.confirmation_number,
+        roomNumber: row.room_number,
+        roomType: row.room_type,
+        arrivalDate: row.arrival_date,
+        departureDate: row.departure_date,
+        numberOfNights: row.number_of_nights,
+        signatureDataUrl: row.signature_data_url,
+        registeredAt: row.registered_at,
+        registeredBy: row.registered_by,
+        pmsSource: row.pms_source,
+        pmsReservationId: row.pms_reservation_id,
+        specialRequests: row.special_requests,
+        numberOfGuests: row.number_of_guests,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        hotelId: row.hotel_id
+      } as RegistrationContract;
+    }
+    
+    return undefined;
   }
 
   async searchContracts(params: SearchContracts): Promise<RegistrationContract[]> {

@@ -91,8 +91,20 @@ export default function ContractSearch() {
     }
   };
 
-  const handleViewContract = (contract: RegistrationContract) => {
-    setSelectedContract(contract);
+  const handleViewContract = async (contract: RegistrationContract) => {
+    // Fetch fresh contract data from server to ensure we have latest updates
+    try {
+      const response = await fetch(`/api/contracts/${contract.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch contract details");
+      }
+      const freshContract = await response.json();
+      setSelectedContract(freshContract);
+    } catch (error) {
+      console.error("Error fetching contract details:", error);
+      // Fallback to cached data if fetch fails
+      setSelectedContract(contract);
+    }
   };
 
   const handleDownloadPDF = async (contractId: string) => {

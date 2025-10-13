@@ -3,6 +3,8 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tablet, CheckCircle, ScrollText } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -49,6 +51,8 @@ export default function TabletSignature() {
   const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [signaturePad, setSignaturePad] = useState<SignatureCanvas | null>(null);
   const [isSigned, setIsSigned] = useState(false);
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -77,10 +81,12 @@ export default function TabletSignature() {
       console.log("Received message:", message);
       
       if (message.type === "receive_contract") {
-        const { contractId, contract } = message.payload;
+        const { contractId, assignmentId, contract } = message.payload;
         setCurrentContract(contract);
-        setAssignmentId(contractId);
+        setAssignmentId(assignmentId || contractId); // Use assignmentId if provided, fallback to contractId
         setIsSigned(false);
+        setEmail(contract.email || "");
+        setPhone(contract.phone || "");
         
         // Clear signature pad if it exists
         if (signaturePad) {
@@ -97,7 +103,7 @@ export default function TabletSignature() {
           type: "contract_viewed",
           payload: {
             contractId,
-            assignmentId: contractId,
+            assignmentId: assignmentId || contractId,
           },
         });
       }
@@ -148,13 +154,23 @@ export default function TabletSignature() {
 
     const signatureDataUrl = signaturePad.toDataURL();
     
-    // Send signature to server via WebSocket
+    console.log("[Tablet] Sending contract_signed with:", {
+      contractId: currentContract?.id,
+      assignmentId,
+      email,
+      phone,
+      hasSignature: !!signatureDataUrl
+    });
+    
+    // Send signature to server via WebSocket with updated contact info
     send({
       type: "contract_signed",
       payload: {
         contractId: currentContract?.id,
         assignmentId,
         signatureDataUrl,
+        email,
+        phone,
       },
     });
     
@@ -170,6 +186,8 @@ export default function TabletSignature() {
       setCurrentContract(null);
       setAssignmentId(null);
       setIsSigned(false);
+      setEmail("");
+      setPhone("");
       signaturePad?.clear();
     }, 2000);
   };
@@ -262,38 +280,52 @@ export default function TabletSignature() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Guest Name</label>
-                <p className="text-lg font-semibold" data-testid="text-guest-name">
+                <Label className="text-sm font-medium text-muted-foreground">Guest Name</Label>
+                <p className="text-lg font-semibold mt-1" data-testid="text-guest-name">
                   {currentContract.guestName}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Email</label>
-                <p className="text-lg" data-testid="text-email">
-                  {currentContract.email || "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Phone</label>
-                <p className="text-lg" data-testid="text-phone">
-                  {currentContract.phone || "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Room</label>
-                <p className="text-lg" data-testid="text-room">
+                <Label className="text-sm font-medium text-muted-foreground">Room</Label>
+                <p className="text-lg mt-1" data-testid="text-room">
                   {currentContract.roomNumber || "TBD"}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Check-in</label>
-                <p className="text-lg" data-testid="text-checkin">
+                <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="guest@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isSigned}
+                  className="mt-1"
+                  data-testid="input-email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+1 (555) 000-0000"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={isSigned}
+                  className="mt-1"
+                  data-testid="input-phone"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Check-in</Label>
+                <p className="text-lg mt-1" data-testid="text-checkin">
                   {currentContract.arrivalDate}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Check-out</label>
-                <p className="text-lg" data-testid="text-checkout">
+                <Label className="text-sm font-medium text-muted-foreground">Check-out</Label>
+                <p className="text-lg mt-1" data-testid="text-checkout">
                   {currentContract.departureDate}
                 </p>
               </div>
