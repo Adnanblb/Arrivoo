@@ -1,6 +1,9 @@
 import { WebSocketServer, WebSocket } from "ws";
 import type { Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
+import { devices } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 interface DeviceConnection {
   deviceId: string;
@@ -47,14 +50,59 @@ export function setupWebSocket(server: Server) {
         
         switch (message.type) {
           case "register_device": {
-            const { deviceId, hotelId, deviceType, browser, os, screenSize } = message.payload;
+            const { deviceId, hotelId, deviceType, browser, os, screenSize, deviceName } = message.payload;
             
-            // Update device in database with metadata
-            await storage.updateDeviceSocketId(deviceId, deviceId, true, {
-              browser,
-              os,
-              screenSize,
-            });
+            console.log(`[WebSocket] register_device payload:`, { deviceId, hotelId, deviceType, deviceName });
+            
+            // Check if device exists in database
+            const existingDevice = await storage.getDevice(deviceId);
+            console.log(`[WebSocket] Existing device check for ${deviceId}:`, existingDevice ? 'EXISTS' : 'NOT FOUND');
+            
+            if (!existingDevice) {
+              // Device doesn't exist - create it first (direct insert with specific ID)
+              console.log(`[WebSocket] Creating device in database: ${deviceId} for hotel ${hotelId}`);
+              try {
+                await db.insert(devices).values({
+                  id: deviceId,
+                  hotelId,
+                  deviceName: deviceName || `Auto-registered ${deviceType}`,
+                  deviceType,
+                  isOnline: true,
+                  socketId: deviceId,
+                  browser,
+                  os,
+                  screenSize,
+                });
+                console.log(`[WebSocket] Device created successfully: ${deviceId}`);
+              } catch (error) {
+                console.error(`[WebSocket] Error creating device:`, error);
+              }
+            } else {
+              // Device exists - check if hotelId matches
+              if (existingDevice.hotelId !== hotelId) {
+                console.log(`[WebSocket] FIXING hotel mismatch! Device ${deviceId} was in hotel ${existingDevice.hotelId}, moving to ${hotelId}`);
+                await db.update(devices)
+                  .set({ 
+                    hotelId,
+                    deviceName: deviceName || existingDevice.deviceName,
+                    isOnline: true,
+                    socketId: deviceId,
+                    browser,
+                    os,
+                    screenSize,
+                    lastSeen: new Date(),
+                  })
+                  .where(eq(devices.id, deviceId));
+              } else {
+                // Update existing device with metadata and online status
+                console.log(`[WebSocket] Updating existing device: ${deviceId}`);
+                await storage.updateDeviceSocketId(deviceId, deviceId, true, {
+                  browser,
+                  os,
+                  screenSize,
+                });
+              }
+            }
             
             // Store connection
             currentDeviceId = deviceId;

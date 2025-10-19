@@ -71,12 +71,16 @@ export default function DeviceRegistration() {
       
       // Re-register with WebSocket on page load
       if (isConnected) {
+        const metadata = getDeviceMetadata();
+        const storedDeviceName = localStorage.getItem("deviceName");
         send({
           type: "register_device",
           payload: {
             deviceId: storedDeviceId,
             hotelId: storedHotelId,
+            deviceName: storedDeviceName || "Tablet",
             deviceType: "tablet",
+            ...metadata,
           },
         });
       }
@@ -115,6 +119,7 @@ export default function DeviceRegistration() {
         payload: {
           deviceId: device.id,
           hotelId: data.hotelId,
+          deviceName: data.deviceName,
           deviceType: "tablet",
           ...metadata,
         },

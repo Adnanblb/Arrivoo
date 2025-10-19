@@ -123,6 +123,7 @@ export default function TabletSignature() {
         payload: {
           deviceId,
           hotelId,
+          deviceName: deviceName || "Tablet",
           deviceType: "tablet",
           ...metadata,
         },

@@ -446,11 +446,29 @@ export class DbStorage implements IStorage {
   }
 
   async getDevicesByHotel(hotelId: string): Promise<Device[]> {
-    return await db
+    console.log(`[Storage] getDevicesByHotel called for hotelId: ${hotelId}`);
+    
+    // First, let's see ALL devices
+    const allDevices = await db.select().from(devices);
+    console.log(`[Storage] Total devices in database: ${allDevices.length}`);
+    if (allDevices.length > 0) {
+      console.log(`[Storage] Sample device structure:`, {
+        id: allDevices[0].id,
+        hotelId: allDevices[0].hotelId,
+        deviceName: allDevices[0].deviceName,
+      });
+    }
+    
+    const result = await db
       .select()
       .from(devices)
       .where(eq(devices.hotelId, hotelId))
       .orderBy(desc(devices.lastSeen));
+    console.log(`[Storage] getDevicesByHotel returned ${result.length} devices for hotelId=${hotelId}`);
+    if (result.length > 0) {
+      console.log(`[Storage] Devices:`, result.map(d => ({ id: d.id, name: d.deviceName, online: d.isOnline })));
+    }
+    return result;
   }
 
   async updateDevice(id: string, device: Partial<InsertDevice>): Promise<Device | undefined> {
