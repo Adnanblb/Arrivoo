@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./StatusBadge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Eye } from "lucide-react";
+import { Send, Eye, Trash2 } from "lucide-react";
 
 interface GuestCardProps {
   id: string;
@@ -14,6 +14,7 @@ interface GuestCardProps {
   status: "completed" | "pending";
   onSendToTablet: (id: string) => void;
   onViewDetails: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export function GuestCard({
@@ -26,6 +27,7 @@ export function GuestCard({
   status,
   onSendToTablet,
   onViewDetails,
+  onDelete,
 }: GuestCardProps) {
   const initials = guestName
     .split(" ")
@@ -88,6 +90,14 @@ export function GuestCard({
             Send to Tablet
           </Button>
         )}
+        <Button
+          data-testid={`button-delete-${id}`}
+          variant="destructive"
+          size="sm"
+          onClick={() => onDelete(id)}
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
       </CardFooter>
     </Card>
   );

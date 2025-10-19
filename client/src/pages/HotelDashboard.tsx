@@ -265,6 +265,34 @@ export default function HotelDashboard() {
     setSelectedGuest(guest);
   };
 
+  const deleteArrivalMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/arrivals/${id}`, {});
+      return await response.json();
+    },
+    onSuccess: async () => {
+      // Invalidate arrivals cache to refresh the dashboard
+      await queryClient.invalidateQueries({ queryKey: ['/api/arrivals', hotelId] });
+      toast({
+        title: "Deleted",
+        description: "Reservation deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Delete Failed",
+        description: error.message || "Failed to delete reservation",
+      });
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this reservation?")) {
+      deleteArrivalMutation.mutate(id);
+    }
+  };
+
   const handleRefresh = () => {
     const pmsName = pmsConfig ? formatPmsName(pmsConfig.pmsType) : "PMS";
     refetchArrivals();
@@ -510,6 +538,7 @@ export default function HotelDashboard() {
               arrivals={filteredArrivals}
               onSendToTablet={handleSendToTablet}
               onViewDetails={handleViewDetails}
+              onDelete={handleDelete}
             />
           </div>
 
@@ -521,6 +550,7 @@ export default function HotelDashboard() {
                 {...arrival}
                 onSendToTablet={handleSendToTablet}
                 onViewDetails={handleViewDetails}
+                onDelete={handleDelete}
               />
             ))}
           </div>

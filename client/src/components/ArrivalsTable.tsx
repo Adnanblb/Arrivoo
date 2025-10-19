@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./StatusBadge";
-import { Send, Eye } from "lucide-react";
+import { Send, Eye, Trash2 } from "lucide-react";
 
 interface Arrival {
   id: string;
@@ -24,12 +24,14 @@ interface ArrivalsTableProps {
   arrivals: Arrival[];
   onSendToTablet: (id: string) => void;
   onViewDetails: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export function ArrivalsTable({
   arrivals,
   onSendToTablet,
   onViewDetails,
+  onDelete,
 }: ArrivalsTableProps) {
   return (
     <div className="rounded-md border">
@@ -89,6 +91,14 @@ export function ArrivalsTable({
                         <span className="hidden sm:inline">Send to Tablet</span>
                       </Button>
                     )}
+                    <Button
+                      data-testid={`button-delete-${arrival.id}`}
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => onDelete(arrival.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
