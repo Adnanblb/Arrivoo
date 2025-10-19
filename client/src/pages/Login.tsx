@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,9 +44,12 @@ export default function Login() {
       const response = await apiRequest("POST", "/api/auth/login", data);
       return await response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // OTP system disabled - direct login
       if (data.success && data.user) {
+        // Invalidate auth query to refetch user data
+        await queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+        
         toast({
           title: "Login Successful",
           description: `Welcome back!`,

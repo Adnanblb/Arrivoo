@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
-import { Pool } from "@neondatabase/serverless";
+import pg from "pg";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupCronJobs } from "./services/cron";
@@ -13,7 +13,10 @@ app.use(express.urlencoded({ extended: false }));
 
 // Set up PostgreSQL session store
 const PgSession = connectPgSimple(session);
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new pg.Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 // Require SESSION_SECRET
 if (!process.env.SESSION_SECRET) {
