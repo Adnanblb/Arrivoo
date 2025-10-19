@@ -377,13 +377,24 @@ export default function HotelDashboard() {
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold" data-testid="text-hotel-name">
-                Grand Plaza Hotel
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Today's Arrivals - Oct 11, 2025
-              </p>
+            <div className="flex items-center gap-4">
+              {/* Hotel Logo */}
+              {hotel?.logoUrl && (
+                <img 
+                  src={hotel.logoUrl} 
+                  alt={hotel.name}
+                  className="h-12 w-auto object-contain"
+                  data-testid="img-hotel-logo"
+                />
+              )}
+              <div>
+                <h1 className="text-2xl font-bold" data-testid="text-hotel-name">
+                  {hotel?.name || "Grand Plaza Hotel"}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Today's Arrivals - Oct 11, 2025
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Button

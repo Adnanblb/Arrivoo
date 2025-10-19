@@ -208,6 +208,18 @@ export default function TabletSignature() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-2xl">
           <CardHeader>
+            {/* Hotel Logo */}
+            {hotel?.logoUrl && (
+              <div className="mx-auto mb-6">
+                <img 
+                  src={hotel.logoUrl} 
+                  alt={hotel.name}
+                  className="h-16 w-auto object-contain"
+                  data-testid="img-hotel-logo"
+                />
+              </div>
+            )}
+            
             <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <Tablet className="h-10 w-10 text-primary" />
             </div>
