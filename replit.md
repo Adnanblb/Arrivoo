@@ -121,3 +121,19 @@ Preferred communication style: Simple, everyday language.
   - Merya Hotels (test@meryahotels.com / 123123): 8 Saudi guest reservations with custom logo
   - Grand Plaza Hotel (hotel@hotel.com / hotel123): Separate set of arrivals
   - Rosewood Jeddah (Albalbisi11@gmail.com): Independent hotel data
+
+#### Hotel-Specific Tablet QR Codes & Logo Display
+- **✅ Hotel-Specific QR Codes**: Each hotel now has unique QR codes for tablet registration (not shared across hotels)
+  - QR code URL format: `{origin}/tablet/register?hotelId={hotel_uuid}`
+  - AddTabletGuide component uses `useAuth()` to get authenticated user's hotelId
+  - Button disabled until hotelId is loaded to prevent empty QR codes
+- **✅ Automatic Hotel ID Pre-Fill**: Tablet registration page reads hotelId from URL parameter and auto-fills the form
+  - Uses URLSearchParams to extract hotelId from query string
+  - Tablets register with specific hotel, ensuring proper isolation
+- **✅ Logo Display Fixed**: Hotel logos now display correctly on dashboard and tablet pages
+  - Added Express middleware to serve `/attached_assets` folder: `app.use('/attached_assets', express.static(...))`
+  - Logos accessible at `/attached_assets/{filename}` (e.g., Merya logo_1760873504604.jpeg)
+  - Verified: HTTP 200 OK, proper file serving with automatic URL encoding for spaces
+- **✅ Multi-Tenant Device Registration**: Tablets register to specific hotels via hotelId parameter
+  - Backend WebSocket associates device with hotelId for targeted communication
+  - Device list filtered by hotelId - each hotel sees only their own tablets
