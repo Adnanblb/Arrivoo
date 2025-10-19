@@ -6,7 +6,11 @@ export class PdfGenerator {
   /**
    * Generate a PDF for a registration contract and stream it to the response
    */
-  static async generateContractPdf(contract: RegistrationContract, res: Response): Promise<void> {
+  static async generateContractPdf(
+    contract: RegistrationContract, 
+    res: Response,
+    hotelTerms?: string
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         // Create PDF document
@@ -111,6 +115,24 @@ export class PdfGenerator {
         doc.text(`Registered At: ${registrationDate}`);
         doc.text(`PMS Source: ${contract.pmsSource || "Manual"}`);
         doc.text(`Status: ${contract.status || "Completed"}`);
+
+        // Add Terms & Conditions if available
+        if (hotelTerms) {
+          doc.moveDown(2);
+          doc.fontSize(14).font("Helvetica-Bold").text("Terms & Conditions");
+          doc.moveDown(0.5);
+          doc.fontSize(10).font("Helvetica");
+          
+          // Split terms into lines and add to PDF
+          const termsLines = hotelTerms.split('\n');
+          termsLines.forEach(line => {
+            if (line.trim()) {
+              doc.text(line, { align: 'left' });
+            } else {
+              doc.moveDown(0.3);
+            }
+          });
+        }
 
         // Add signature if available
         if (contract.signatureDataUrl) {
