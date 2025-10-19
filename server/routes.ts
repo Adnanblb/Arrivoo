@@ -346,6 +346,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete an arrival
+  app.delete("/api/arrivals/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteArrival(id);
+      res.json({ success: true, message: "Arrival deleted successfully" });
+    } catch (error) {
+      console.error("Delete arrival error:", error);
+      res.status(500).json({ error: "Failed to delete arrival" });
+    }
+  });
+
   // Device Management - Register/Get Devices (Tablets)
   app.post("/api/devices", async (req, res) => {
     try {

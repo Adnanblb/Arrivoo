@@ -75,6 +75,7 @@ export interface IStorage {
   getArrivalsByHotel(hotelId: string, date?: string): Promise<Arrival[]>;
   updateArrivalCheckInStatus(id: string, contractId: string): Promise<Arrival | undefined>;
   deleteOldArrivals(hotelId: string, beforeDate: string): Promise<void>;
+  deleteArrival(id: string): Promise<void>;
   upsertArrival(arrival: InsertArrival): Promise<Arrival>;
 
   // Device management (tablets/iPads)
@@ -405,6 +406,10 @@ export class DbStorage implements IStorage {
           like(arrivals.checkInDate, `%${beforeDate}%`)
         )
       );
+  }
+
+  async deleteArrival(id: string): Promise<void> {
+    await db.delete(arrivals).where(eq(arrivals.id, id));
   }
 
   async upsertArrival(arrival: InsertArrival): Promise<Arrival> {
