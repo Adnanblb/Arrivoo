@@ -16,6 +16,49 @@ import crypto from "crypto";
 export function registerAuthRoutes(app: Express, storage: IStorage) {
   
   /**
+   * POST /api/auth/dev-login-merya
+   * DEV ONLY: Direct login for Merya Hotels
+   */
+  app.post("/api/auth/dev-login-merya", async (req: Request, res: Response) => {
+    try {
+      // Find Merya Hotels user
+      const user = await storage.getUserByEmail('test@meryahotels.com');
+      if (!user) {
+        return res.status(404).json({ error: "Merya user not found" });
+      }
+      
+      // Create session
+      if (!req.session) {
+        return res.status(500).json({ error: "Session not available" });
+      }
+      
+      req.session.userId = user.id;
+      req.session.sessionId = req.sessionID;
+      
+      req.session.save(async (err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ error: "Failed to create session" });
+        }
+        
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            hotelName: user.hotelName,
+            hotelId: user.hotelId,
+            logoUrl: user.logoUrl,
+          },
+        });
+      });
+    } catch (error) {
+      console.error("Dev login error:", error);
+      res.status(500).json({ error: "Failed to dev login" });
+    }
+  });
+  
+  /**
    * GET /api/auth/me
    * Get current authenticated user
    */
@@ -70,14 +113,23 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
     try {
       const { email, password } = loginSchema.parse(req.body);
       
+      console.log('[LOGIN] Attempting login for:', email);
+      
       // Find user by email
       const user = await storage.getUserByEmail(email);
       if (!user) {
+        console.log('[LOGIN] User not found:', email);
         return res.status(401).json({ error: "Invalid email or password" });
       }
       
+      console.log('[LOGIN] User found:', user.email, 'ID:', user.id);
+      console.log('[LOGIN] Password hash from DB:', user.password);
+      console.log('[LOGIN] Password provided:', password);
+      
       // Verify password
       const isValidPassword = await verifyPassword(password, user.password);
+      console.log('[LOGIN] Password verification result:', isValidPassword);
+      
       if (!isValidPassword) {
         // Log failed login attempt
         const deviceInfo = getDeviceInfo(req.headers);
