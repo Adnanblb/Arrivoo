@@ -72,6 +72,7 @@ export interface IStorage {
 
   // Arrivals management
   createArrival(arrival: InsertArrival): Promise<Arrival>;
+  getArrival(id: string): Promise<Arrival | undefined>;
   getArrivalsByHotel(hotelId: string, date?: string): Promise<Arrival[]>;
   updateArrivalCheckInStatus(id: string, contractId: string): Promise<Arrival | undefined>;
   updateArrival(id: string, updates: Partial<InsertArrival>): Promise<Arrival | undefined>;
@@ -361,6 +362,11 @@ export class DbStorage implements IStorage {
   // Arrivals methods
   async createArrival(arrival: InsertArrival): Promise<Arrival> {
     const result = await db.insert(arrivals).values(arrival).returning();
+    return result[0];
+  }
+
+  async getArrival(id: string): Promise<Arrival | undefined> {
+    const result = await db.select().from(arrivals).where(eq(arrivals.id, id));
     return result[0];
   }
 

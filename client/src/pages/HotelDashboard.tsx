@@ -300,11 +300,10 @@ export default function HotelDashboard() {
   };
 
   const updateArrivalMutation = useMutation({
-    mutationFn: async (data: { id: string; roomNumber: string; numberOfNights: string; checkInDate: string }) => {
+    mutationFn: async (data: { id: string; roomNumber: string; numberOfNights: string }) => {
       const response = await apiRequest("PUT", `/api/arrivals/${data.id}`, {
         roomNumber: data.roomNumber,
         numberOfNights: parseInt(data.numberOfNights),
-        checkInDate: data.checkInDate,
       });
       return await response.json();
     },
@@ -347,7 +346,6 @@ export default function HotelDashboard() {
         id: selectedGuest.id,
         roomNumber: editGuestData.roomNumber,
         numberOfNights: editGuestData.numberOfNights,
-        checkInDate: selectedGuest.checkInDate,
       });
     }
   };

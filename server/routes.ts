@@ -12,6 +12,7 @@ import {
   insertPmsConfigurationSchema,
   insertDeviceSchema,
   insertContractAssignmentSchema,
+  updateArrivalSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -362,26 +363,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/arrivals/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const { roomNumber, numberOfNights, checkInDate } = req.body;
       
-      const updates: any = {};
+      // Validate request body
+      const validatedData = updateArrivalSchema.parse(req.body);
       
-      if (roomNumber !== undefined) {
-        updates.roomNumber = roomNumber;
+      // Load existing arrival to get authoritative checkInDate
+      const existingArrival = await storage.getArrival(id);
+      
+      if (!existingArrival) {
+        return res.status(404).json({ error: "Arrival not found" });
       }
       
-      if (numberOfNights !== undefined && checkInDate) {
-        updates.numberOfNights = numberOfNights;
-        // Calculate new checkout date
-        const checkIn = new Date(checkInDate);
-        const checkOut = new Date(checkIn);
-        checkOut.setDate(checkOut.getDate() + numberOfNights);
-        updates.checkOutDate = checkOut.toISOString().split('T')[0];
-      }
+      // Build updates object
+      const updates: any = {
+        roomNumber: validatedData.roomNumber,
+        numberOfNights: validatedData.numberOfNights,
+      };
+      
+      // Calculate new checkout date based on authoritative checkInDate
+      const checkIn = new Date(existingArrival.checkInDate);
+      const checkOut = new Date(checkIn);
+      checkOut.setDate(checkOut.getDate() + validatedData.numberOfNights);
+      updates.checkOutDate = checkOut.toISOString().split('T')[0];
       
       const updatedArrival = await storage.updateArrival(id, updates);
       res.json(updatedArrival);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
       console.error("Update arrival error:", error);
       res.status(500).json({ error: "Failed to update arrival" });
     }

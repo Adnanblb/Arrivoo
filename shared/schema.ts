@@ -219,7 +219,13 @@ export const insertArrivalSchema = createInsertSchema(arrivals).omit({
   syncedAt: true,
 });
 
+export const updateArrivalSchema = z.object({
+  roomNumber: z.string().min(1, "Room number is required"),
+  numberOfNights: z.number().int().positive("Number of nights must be positive"),
+});
+
 export type InsertArrival = z.infer<typeof insertArrivalSchema>;
+export type UpdateArrival = z.infer<typeof updateArrivalSchema>;
 export type Arrival = typeof arrivals.$inferSelect;
 
 // PMS Lookup Request schema
