@@ -54,6 +54,26 @@ Preferred communication style: Simple, everyday language.
 
 ### October 19, 2025
 
+#### Delete Reservation Feature
+- **✅ Delete Button**: Added delete button to both desktop table view and mobile card view for removing unwanted arrivals/reservations
+- **✅ Backend API**: New endpoint DELETE /api/arrivals/:id that removes arrival from database
+- **✅ Storage Method**: Added `deleteArrival(id)` method to storage layer following existing CRUD patterns
+- **✅ UI Components**: 
+  - ArrivalsTable: Delete button with destructive variant and trash icon for each row
+  - GuestCard: Delete button with confirmation for mobile view
+- **✅ Confirmation Dialog**: Browser native confirm dialog prevents accidental deletions
+- **✅ Real-time Updates**: Dashboard automatically refreshes after deletion via cache invalidation
+- **✅ E2E Testing**: Verified delete functionality works correctly with automated tests
+
+#### Flexible Manual Check-In Workflow
+- **✅ Save Only Option**: Manual check-in dialog now offers two buttons:
+  - "Create & Send to Tablet" - Creates check-in and opens Send to Tablet dialog (original behavior)
+  - "Save Only" - Creates check-in without opening Send to Tablet dialog (new option)
+- **✅ Conditional Flow**: Backend mutation conditionally opens Send to Tablet dialog based on user's button choice
+- **✅ Enhanced UX**: Staff can now quickly save check-ins for later processing without immediately assigning to a tablet
+- **✅ Toast Feedback**: Different success messages for "Save Only" vs "Create & Send to Tablet"
+- **✅ E2E Testing**: Both workflows tested successfully with automated tests
+
 #### PDF Download for Registration Contracts
 - **✅ Download Button**: Added "Download PDF" button to the contract details dialog for easy access to printable contracts
 - **✅ Complete PDF Generation**: PDF now includes all contract information:
