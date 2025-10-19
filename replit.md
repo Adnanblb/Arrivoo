@@ -107,5 +107,17 @@ Preferred communication style: Simple, everyday language.
 - Database Configuration: Supabase Transaction Pooler (port 6543) at aws-1-us-east-2.pooler.supabase.com
 - **CRITICAL FIX**: Configured `prepare: false` for Supabase pooler compatibility
 - Updated all hotel IDs throughout codebase to use new Supabase hotel IDs
-- Current Hotels: Rosewood Jeddah (2b95c6e8-...), Grand Plaza Hotel (f39d5d3b-...)
+- Current Hotels: Rosewood Jeddah (2b95c6e8-...), Grand Plaza Hotel (f39d5d3b-...), Merya Hotels (a6cff5a0-...)
 - All features verified: PMS sync, arrivals display, tablet management, contract creation
+
+#### Multi-Tenancy & Data Isolation
+- **✅ Complete Multi-Tenancy**: Each hotel sees only their own data (arrivals, contracts, devices, logos)
+- **✅ Authentication-Based Filtering**: Dashboard uses `useAuth()` hook to fetch logged-in user's hotelId, hotelName, and logoUrl
+- **✅ Dynamic Hotel Branding**: Hotel name and logo displayed on dashboard header automatically based on authenticated user
+- **✅ Tablet Logo Display**: iPad waiting screen shows hotel-specific logo from authenticated user's data
+- **✅ 8 Arrivals Maximum**: Dashboard limited to display maximum 8 reservations at a time per hotel
+- **✅ API-Level Filtering**: All arrivals queries filter by hotelId with `.limit(8)` in storage layer
+- **Test Hotels**:
+  - Merya Hotels (test@meryahotels.com / 123123): 8 Saudi guest reservations with custom logo
+  - Grand Plaza Hotel (hotel@hotel.com / hotel123): Separate set of arrivals
+  - Rosewood Jeddah (Albalbisi11@gmail.com): Independent hotel data

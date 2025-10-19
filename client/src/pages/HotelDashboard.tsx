@@ -20,10 +20,8 @@ import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar, 
 import { useTheme } from "@/components/ThemeProvider";
 import { useLocation } from "wouter";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { useAuth } from "@/contexts/AuthContext";
 import type { PmsConfiguration, RegistrationContract } from "@shared/schema";
-
-// Grand Plaza Hotel ID from Supabase database
-const MOCK_HOTEL_ID = "f39d5d3b-a803-42c6-a266-e84fbbad98dd"; // Grand Plaza Hotel
 
 // Helper function to format PMS type names
 function formatPmsName(pmsType: string): string {
@@ -86,6 +84,7 @@ const mockArrivals = [
 
 export default function HotelDashboard() {
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
   const [selectedGuest, setSelectedGuest] = useState<typeof mockArrivals[0] | null>(null);
   const [selectedContract, setSelectedContract] = useState<RegistrationContract | null>(null);
@@ -101,29 +100,39 @@ export default function HotelDashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
+  // Use authenticated user's hotel ID
+  const hotelId = user?.hotelId || "";
+  const hotelName = user?.hotelName || "Hotel";
+  const logoUrl = user?.logoUrl;
+
   // Set hotelId in localStorage for Settings page to access
   useEffect(() => {
-    localStorage.setItem("hotelId", MOCK_HOTEL_ID);
-  }, []);
+    if (hotelId) {
+      localStorage.setItem("hotelId", hotelId);
+    }
+  }, [hotelId]);
 
   // Fetch PMS configuration for this hotel
   const { data: pmsConfig } = useQuery<PmsConfiguration>({
-    queryKey: ['/api/pms-config', MOCK_HOTEL_ID],
+    queryKey: ['/api/pms-config', hotelId],
+    enabled: !!hotelId,
   });
 
   // Fetch hotel details for contract terms
   const { data: hotel } = useQuery({
-    queryKey: ["/api/hotels", MOCK_HOTEL_ID],
+    queryKey: ["/api/hotels", hotelId],
+    enabled: !!hotelId,
     queryFn: async () => {
-      const response = await fetch(`/api/hotels/${MOCK_HOTEL_ID}`);
+      const response = await fetch(`/api/hotels/${hotelId}`);
       if (!response.ok) throw new Error("Failed to fetch hotel");
       return response.json();
     },
   });
 
-  // Fetch real arrivals from API
+  // Fetch real arrivals from API (limited to 8)
   const { data: apiArrivals = [], refetch: refetchArrivals } = useQuery<any[]>({
-    queryKey: ['/api/arrivals', MOCK_HOTEL_ID],
+    queryKey: ['/api/arrivals', hotelId],
+    enabled: !!hotelId,
   });
 
   // WebSocket connection for real-time updates
@@ -174,7 +183,7 @@ export default function HotelDashboard() {
       if (!contractId) {
         // Create a contract from the arrival data
         const contractData = {
-          hotelId: MOCK_HOTEL_ID,
+          hotelId: hotelId,
           guestName: arrivalData.guestName || arrivalData.guest_name,
           email: arrivalData.email || "",
           phone: arrivalData.phoneNumber || arrivalData.phone_number || "",
@@ -301,7 +310,7 @@ export default function HotelDashboard() {
   const createManualCheckInMutation = useMutation({
     mutationFn: async (data: typeof manualCheckInData) => {
       const response = await apiRequest("POST", "/api/contracts/manual", {
-        hotelId: MOCK_HOTEL_ID,
+        hotelId: hotelId,
         guestName: data.guestName,
         roomNumber: data.roomNumber,
         arrivalDate: data.checkInDate,
@@ -312,7 +321,7 @@ export default function HotelDashboard() {
     },
     onSuccess: async (contract) => {
       // Invalidate arrivals cache to refresh the dashboard
-      await queryClient.invalidateQueries({ queryKey: ['/api/arrivals', MOCK_HOTEL_ID] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/arrivals', hotelId] });
       
       toast({
         title: "Check-In Created",
@@ -379,17 +388,17 @@ export default function HotelDashboard() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               {/* Hotel Logo */}
-              {hotel?.logoUrl && (
+              {logoUrl && (
                 <img 
-                  src={hotel.logoUrl} 
-                  alt={hotel.name}
+                  src={logoUrl} 
+                  alt={hotelName}
                   className="h-12 w-auto object-contain"
                   data-testid="img-hotel-logo"
                 />
               )}
               <div>
                 <h1 className="text-2xl font-bold" data-testid="text-hotel-name">
-                  {hotel?.name || "Grand Plaza Hotel"}
+                  {hotelName}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
                   Today's Arrivals - Oct 11, 2025
@@ -878,7 +887,7 @@ export default function HotelDashboard() {
           isOpen={!!sendToTabletGuest}
           onClose={() => setSendToTabletGuest(null)}
           contractData={sendToTabletGuest}
-          hotelId={MOCK_HOTEL_ID}
+          hotelId={hotelId}
         />
       )}
     </div>

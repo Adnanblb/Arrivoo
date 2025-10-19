@@ -364,17 +364,22 @@ export class DbStorage implements IStorage {
 
   async getArrivalsByHotel(hotelId: string, date?: string): Promise<Arrival[]> {
     // If date is provided, filter by check-in date; otherwise return all arrivals
+    // Limit to 8 arrivals maximum
     const query = date
       ? db
           .select()
           .from(arrivals)
           .where(and(eq(arrivals.hotelId, hotelId), eq(arrivals.checkInDate, date)))
+          .orderBy(desc(arrivals.checkInDate), desc(arrivals.estimatedArrivalTime))
+          .limit(8)
       : db
           .select()
           .from(arrivals)
-          .where(eq(arrivals.hotelId, hotelId));
+          .where(eq(arrivals.hotelId, hotelId))
+          .orderBy(desc(arrivals.checkInDate), desc(arrivals.estimatedArrivalTime))
+          .limit(8);
     
-    return await query.orderBy(desc(arrivals.checkInDate), desc(arrivals.estimatedArrivalTime));
+    return await query;
   }
 
   async updateArrivalCheckInStatus(id: string, contractId: string): Promise<Arrival | undefined> {
