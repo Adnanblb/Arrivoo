@@ -54,6 +54,17 @@ Preferred communication style: Simple, everyday language.
 
 ### October 19, 2025
 
+#### PDF Download for Registration Contracts
+- **✅ Download Button**: Added "Download PDF" button to the contract details dialog for easy access to printable contracts
+- **✅ Complete PDF Generation**: PDF now includes all contract information:
+  - Guest Information (name, email, phone, address, ID number)
+  - Reservation Details (reservation number, confirmation, room, room type, number of guests)
+  - Stay Details (check-in/out dates, number of nights, special requests)
+  - **Full Terms & Conditions** (complete hotel contract terms from hotel settings)
+  - Digital Signature (guest signature image with timestamp)
+- **✅ Professional Formatting**: PDF is properly formatted with sections, headers, and signature image embedding
+- **✅ Error Handling**: Graceful fallback if hotel terms unavailable, continues PDF generation without terms
+
 #### Dashboard Auto-Switch & Full Contract Details View
 - **✅ WebSocket Auto-Refresh**: Dashboard now automatically refreshes arrivals and switches to "Completed" tab when a guest submits their signature on the tablet. Includes success toast notification for immediate feedback
 - **✅ Full Contract Details Dialog**: When viewing completed arrivals (eye icon), the system now fetches and displays complete contract information including:
