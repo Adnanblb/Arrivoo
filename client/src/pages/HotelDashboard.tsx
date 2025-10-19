@@ -90,6 +90,14 @@ export default function HotelDashboard() {
   const [selectedGuest, setSelectedGuest] = useState<typeof mockArrivals[0] | null>(null);
   const [selectedContract, setSelectedContract] = useState<RegistrationContract | null>(null);
   const [sendToTabletGuest, setSendToTabletGuest] = useState<typeof mockArrivals[0] | null>(null);
+  const [showManualCheckIn, setShowManualCheckIn] = useState(false);
+  const [manualCheckInData, setManualCheckInData] = useState({
+    guestName: "",
+    roomNumber: "",
+    checkInDate: new Date().toISOString().split('T')[0],
+    checkOutDate: "",
+    numberOfNights: "",
+  });
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -290,6 +298,76 @@ export default function HotelDashboard() {
     logoutMutation.mutate();
   };
 
+  const createManualCheckInMutation = useMutation({
+    mutationFn: async (data: typeof manualCheckInData) => {
+      const response = await apiRequest("POST", "/api/contracts/manual", {
+        hotelId: MOCK_HOTEL_ID,
+        guestName: data.guestName,
+        roomNumber: data.roomNumber,
+        arrivalDate: data.checkInDate,
+        departureDate: data.checkOutDate || undefined,
+        numberOfNights: data.numberOfNights ? parseInt(data.numberOfNights) : undefined,
+      });
+      return await response.json();
+    },
+    onSuccess: (contract) => {
+      toast({
+        title: "Check-In Created",
+        description: "Manual check-in created successfully. Send it to a tablet now.",
+      });
+      setShowManualCheckIn(false);
+      // Reset form
+      setManualCheckInData({
+        guestName: "",
+        roomNumber: "",
+        checkInDate: new Date().toISOString().split('T')[0],
+        checkOutDate: "",
+        numberOfNights: "",
+      });
+      // Open send to tablet dialog with the new contract
+      setSendToTabletGuest({
+        id: contract.id,
+        guestName: contract.guestName,
+        reservationNumber: contract.reservationNumber,
+        roomNumber: contract.roomNumber,
+        checkInDate: contract.arrivalDate,
+        checkOutDate: contract.departureDate,
+        status: "pending" as const,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to Create Check-In",
+        description: error.message || "Could not create manual check-in",
+      });
+    },
+  });
+
+  const handleManualCheckInSubmit = () => {
+    // Validate required fields
+    if (!manualCheckInData.guestName || !manualCheckInData.roomNumber) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please fill in guest name and room number",
+      });
+      return;
+    }
+
+    // Validate that either checkOutDate or numberOfNights is provided
+    if (!manualCheckInData.checkOutDate && !manualCheckInData.numberOfNights) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please provide either check-out date or number of nights",
+      });
+      return;
+    }
+
+    createManualCheckInMutation.mutate(manualCheckInData);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -305,6 +383,14 @@ export default function HotelDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                data-testid="button-new-checkin"
+                onClick={() => setShowManualCheckIn(true)}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                New Check-In
+              </Button>
               <Button
                 data-testid="button-refresh"
                 variant="ghost"
@@ -653,6 +739,120 @@ export default function HotelDashboard() {
               className="flex-1"
             >
               Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual Check-In Dialog */}
+      <Dialog open={showManualCheckIn} onOpenChange={setShowManualCheckIn}>
+        <DialogContent className="max-w-md" data-testid="dialog-manual-checkin">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <Plus className="h-6 w-6 text-primary" />
+              New Manual Check-In
+            </DialogTitle>
+            <DialogDescription>
+              Create a new guest registration without PMS lookup
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Guest Name */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Guest Name *</label>
+              <input
+                type="text"
+                data-testid="input-guest-name"
+                placeholder="John Doe"
+                value={manualCheckInData.guestName}
+                onChange={(e) => setManualCheckInData({ ...manualCheckInData, guestName: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md bg-background"
+              />
+            </div>
+
+            {/* Room Number */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Room Number *</label>
+              <input
+                type="text"
+                data-testid="input-room-number"
+                placeholder="302"
+                value={manualCheckInData.roomNumber}
+                onChange={(e) => setManualCheckInData({ ...manualCheckInData, roomNumber: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md bg-background"
+              />
+            </div>
+
+            {/* Check-In Date */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Check-In Date</label>
+              <input
+                type="date"
+                data-testid="input-checkin-date"
+                value={manualCheckInData.checkInDate}
+                onChange={(e) => setManualCheckInData({ ...manualCheckInData, checkInDate: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md bg-background"
+              />
+              <p className="text-xs text-muted-foreground">Auto-filled with today's date</p>
+            </div>
+
+            {/* Check-Out Date OR Number of Nights */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Check-Out Date</label>
+                <input
+                  type="date"
+                  data-testid="input-checkout-date"
+                  value={manualCheckInData.checkOutDate}
+                  onChange={(e) => setManualCheckInData({ 
+                    ...manualCheckInData, 
+                    checkOutDate: e.target.value,
+                    numberOfNights: "" // Clear nights if date is set
+                  })}
+                  disabled={!!manualCheckInData.numberOfNights}
+                  className="w-full px-3 py-2 border rounded-md bg-background disabled:opacity-50"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">OR Nights</label>
+                <input
+                  type="number"
+                  data-testid="input-nights"
+                  placeholder="3"
+                  min="1"
+                  value={manualCheckInData.numberOfNights}
+                  onChange={(e) => setManualCheckInData({ 
+                    ...manualCheckInData, 
+                    numberOfNights: e.target.value,
+                    checkOutDate: "" // Clear date if nights is set
+                  })}
+                  disabled={!!manualCheckInData.checkOutDate}
+                  className="w-full px-3 py-2 border rounded-md bg-background disabled:opacity-50"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Provide either check-out date or number of nights *</p>
+          </div>
+
+          <div className="flex gap-2 pt-4 border-t">
+            <Button
+              data-testid="button-create-checkin"
+              onClick={handleManualCheckInSubmit}
+              disabled={createManualCheckInMutation.isPending}
+              className="flex-1"
+            >
+              {createManualCheckInMutation.isPending ? "Creating..." : "Create & Send to Tablet"}
+            </Button>
+            <Button
+              data-testid="button-cancel-checkin"
+              variant="outline"
+              onClick={() => setShowManualCheckIn(false)}
+              disabled={createManualCheckInMutation.isPending}
+              className="flex-1"
+            >
+              Cancel
             </Button>
           </div>
         </DialogContent>
