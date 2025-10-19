@@ -54,11 +54,13 @@ Preferred communication style: Simple, everyday language.
 
 ### October 19, 2025
 
-#### Tablet Signature UI Improvements
+#### Tablet Signature UI Improvements & Check-in Flow Fix
 - **✅ Changed "Save Signature" button to "Submit"**: Updated tablet signature page button text from "Save Signature" to "Submit" for clearer guest-facing language
 - **✅ Contract Status Auto-Completion**: When guests click "Submit" on the tablet, the contract status is automatically set to "completed" (not "pending")
+- **✅ Arrival Status Update**: Fixed critical issue where arrivals remained in "Pending" tab after check-in. Now when a guest submits their signature, the arrival status (hasCheckedIn) is automatically updated, moving the guest from "Pending" to "Completed" tab on the dashboard
 - **✅ Improved User Feedback**: Updated success message to "Check-in Completed - Your registration has been submitted successfully" for better clarity
 - **✅ Success State**: Button displays "Submitted" with checkmark icon after successful submission
+- **✅ Dashboard Sync**: Dashboard now correctly reflects completed check-ins in real-time. Guests disappear from "Pending" and appear in "Completed" immediately after submitting their signature
 
 #### Supabase Database Migration
 - **✅ Supabase Integration Completed**: Successfully migrated from Replit PostgreSQL to Supabase

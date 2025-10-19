@@ -152,7 +152,7 @@ export function setupWebSocket(server: Server) {
             const { contractId, assignmentId, signatureDataUrl, email, phone } = message.payload;
             
             // Update contract with signature and contact information
-            await storage.updateContractSignature(contractId, signatureDataUrl, email, phone);
+            const updatedContract = await storage.updateContractSignature(contractId, signatureDataUrl, email, phone);
             
             // Update assignment status
             await storage.updateContractAssignmentStatus(
@@ -160,6 +160,19 @@ export function setupWebSocket(server: Server) {
               "signed",
               new Date()
             );
+            
+            // Find and update the related arrival to mark it as checked in
+            if (updatedContract && currentHotelId) {
+              const arrivals = await storage.getArrivalsByHotel(currentHotelId);
+              const relatedArrival = arrivals.find(
+                arr => arr.reservationNumber === updatedContract.reservationNumber
+              );
+              
+              if (relatedArrival) {
+                await storage.updateArrivalCheckInStatus(relatedArrival.id, contractId);
+                console.log(`Updated arrival ${relatedArrival.id} check-in status for contract ${contractId}`);
+              }
+            }
             
             // Broadcast status update and signature to all devices in the hotel
             if (currentHotelId) {
