@@ -83,6 +83,25 @@ Preferred communication style: Simple, everyday language.
 - **✅ Success State**: Button displays "Submitted" with checkmark icon after successful submission
 - **✅ Dashboard Sync**: Dashboard now correctly reflects completed check-ins in real-time. Guests disappear from "Pending" and appear in "Completed" immediately after submitting their signature
 
+#### Manual Check-In Feature
+- **✅ New Check-In Button**: Added "New Check-In" button in dashboard header for creating manual check-ins without PMS lookup
+- **✅ Manual Check-In Dialog**: Full-featured form with fields:
+  - Guest name (required)
+  - Room number (required)
+  - Check-in date (auto-filled with today's date)
+  - Check-out date OR number of nights (mutually exclusive)
+  - Validates that either check-out date or nights is provided
+- **✅ Backend API**: New endpoint POST /api/contracts/manual that:
+  - Validates required fields
+  - Calculates departure date from number of nights if provided
+  - Generates unique reservation number (format: MAN-{timestamp})
+  - Creates both contract AND arrival entries
+  - Links arrival to contract via contractId for proper status tracking
+- **✅ Auto Send to Tablet**: After creating manual check-in, Send to Tablet dialog opens automatically
+- **✅ Dashboard Integration**: Manual check-ins appear in Pending tab immediately (arrivals cache invalidated after creation)
+- **✅ Complete Flow**: Verified end-to-end - create manual check-in → send to tablet → guest signs → moves to Completed tab
+- **✅ E2E Testing**: Full manual check-in workflow tested successfully with automated tests
+
 #### Supabase Database Migration
 - **✅ Supabase Integration Completed**: Successfully migrated from Replit PostgreSQL to Supabase
 - Database Configuration: Supabase Transaction Pooler (port 6543) at aws-1-us-east-2.pooler.supabase.com
