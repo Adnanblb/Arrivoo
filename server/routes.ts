@@ -101,6 +101,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const contract = await storage.createContract(contractData);
+
+      // Also create an arrival entry so it appears in the dashboard
+      const arrivalData = {
+        hotelId,
+        reservationNumber,
+        guestName,
+        roomNumber,
+        checkInDate: arrivalDate,
+        checkOutDate: finalDepartureDate,
+        numberOfNights: finalNumberOfNights,
+        pmsSource: "manual",
+        hasCheckedIn: false,
+        contractId: contract.id,
+      };
+
+      await storage.createArrival(arrivalData);
+
       res.json(contract);
     } catch (error) {
       console.error("Create manual contract error:", error);

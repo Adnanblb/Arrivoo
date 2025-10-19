@@ -310,7 +310,10 @@ export default function HotelDashboard() {
       });
       return await response.json();
     },
-    onSuccess: (contract) => {
+    onSuccess: async (contract) => {
+      // Invalidate arrivals cache to refresh the dashboard
+      await queryClient.invalidateQueries({ queryKey: ['/api/arrivals', MOCK_HOTEL_ID] });
+      
       toast({
         title: "Check-In Created",
         description: "Manual check-in created successfully. Send it to a tablet now.",
