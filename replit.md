@@ -49,3 +49,21 @@ Preferred communication style: Simple, everyday language.
 **Device Registration:** Tablets self-register with unique device IDs, capture metadata, and confirm connectivity via WebSocket. Device status (online/offline) is tracked.
 
 **Tablet Signature View:** Dedicated view for tablets to display guest registration cards, receive real-time updates via WebSocket, capture digital signatures, and auto-submit signed contracts. Optimized for tablet devices.
+
+## Recent Updates
+
+### October 19, 2025
+
+#### Tablet Signature UI Improvements
+- **✅ Changed "Save Signature" button to "Submit"**: Updated tablet signature page button text from "Save Signature" to "Submit" for clearer guest-facing language
+- **✅ Contract Status Auto-Completion**: When guests click "Submit" on the tablet, the contract status is automatically set to "completed" (not "pending")
+- **✅ Improved User Feedback**: Updated success message to "Check-in Completed - Your registration has been submitted successfully" for better clarity
+- **✅ Success State**: Button displays "Submitted" with checkmark icon after successful submission
+
+#### Supabase Database Migration
+- **✅ Supabase Integration Completed**: Successfully migrated from Replit PostgreSQL to Supabase
+- Database Configuration: Supabase Transaction Pooler (port 6543) at aws-1-us-east-2.pooler.supabase.com
+- **CRITICAL FIX**: Configured `prepare: false` for Supabase pooler compatibility
+- Updated all hotel IDs throughout codebase to use new Supabase hotel IDs
+- Current Hotels: Rosewood Jeddah (2b95c6e8-...), Grand Plaza Hotel (f39d5d3b-...)
+- All features verified: PMS sync, arrivals display, tablet management, contract creation

@@ -139,7 +139,7 @@ export default function TabletSignature() {
     if (!signaturePad || signaturePad.isEmpty()) {
       toast({
         title: "Signature Required",
-        description: "Please provide a signature before saving",
+        description: "Please provide a signature before submitting",
         variant: "destructive",
       });
       return;
@@ -162,8 +162,8 @@ export default function TabletSignature() {
     setIsSigned(true);
     
     toast({
-      title: "Signature Saved",
-      description: "Contract has been signed successfully",
+      title: "Check-in Completed",
+      description: "Your registration has been submitted successfully",
     });
 
     // Clear contract after 2 seconds
@@ -378,16 +378,16 @@ export default function TabletSignature() {
               <Button
                 className="flex-1"
                 onClick={handleSaveSignature}
-                data-testid="button-save-signature"
+                data-testid="button-submit"
                 disabled={isSigned}
               >
                 {isSigned ? (
                   <>
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Signed
+                    Submitted
                   </>
                 ) : (
-                  "Save Signature"
+                  "Submit"
                 )}
               </Button>
             </div>
