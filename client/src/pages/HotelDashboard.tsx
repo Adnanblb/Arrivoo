@@ -635,6 +635,18 @@ export default function HotelDashboard() {
 
           <div className="flex gap-2 pt-4 border-t">
             <Button 
+              data-testid="button-download-contract"
+              onClick={() => {
+                if (selectedContract?.id) {
+                  window.open(`/api/contracts/${selectedContract.id}/pdf`, '_blank');
+                }
+              }}
+              className="flex-1"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF
+            </Button>
+            <Button 
               data-testid="button-close-contract"
               variant="outline" 
               onClick={() => setSelectedContract(null)}
