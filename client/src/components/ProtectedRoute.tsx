@@ -10,11 +10,19 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
+  // TEMPORARY: Skip auth check in development to allow exploration
+  const DEV_SKIP_AUTH = true; // Set to false to re-enable authentication
+
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!DEV_SKIP_AUTH && !isLoading && !isAuthenticated) {
       setLocation("/");
     }
   }, [isAuthenticated, isLoading, setLocation]);
+
+  if (DEV_SKIP_AUTH) {
+    // Skip authentication check entirely
+    return <>{children}</>;
+  }
 
   if (isLoading) {
     return (

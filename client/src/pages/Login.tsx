@@ -73,6 +73,12 @@ export default function Login() {
     loginMutation.mutate(data);
   };
 
+  // Temporary dev bypass - skip login
+  const handleSkipLogin = () => {
+    // Just navigate to hotel dashboard without authentication
+    setLocation("/hotel");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <Card className="w-full max-w-md">
@@ -164,6 +170,15 @@ export default function Login() {
             data-testid="link-forgot-password"
           >
             Forgot Password?
+          </Button>
+          {/* Temporary dev bypass */}
+          <Button
+            variant="outline"
+            className="text-sm w-full"
+            onClick={handleSkipLogin}
+            data-testid="button-skip-login"
+          >
+            🚀 Skip Login (Dev Mode)
           </Button>
         </CardFooter>
       </Card>
