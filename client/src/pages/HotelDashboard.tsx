@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar, Plus, Search, Settings, FileText } from "lucide-react";
+import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar, Plus, Search, Settings, FileText, Edit } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLocation } from "wouter";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -92,6 +92,11 @@ export default function HotelDashboard() {
   const [sendToTabletGuest, setSendToTabletGuest] = useState<typeof mockArrivals[0] | null>(null);
   const [showManualCheckIn, setShowManualCheckIn] = useState(false);
   const [shouldAutoSendToTablet, setShouldAutoSendToTablet] = useState(false);
+  const [isEditingGuest, setIsEditingGuest] = useState(false);
+  const [editGuestData, setEditGuestData] = useState({
+    roomNumber: "",
+    numberOfNights: "",
+  });
   const [manualCheckInData, setManualCheckInData] = useState({
     guestName: "",
     roomNumber: "",
@@ -292,6 +297,67 @@ export default function HotelDashboard() {
     if (confirm("Are you sure you want to delete this reservation?")) {
       deleteArrivalMutation.mutate(id);
     }
+  };
+
+  const updateArrivalMutation = useMutation({
+    mutationFn: async (data: { id: string; roomNumber: string; numberOfNights: string; checkInDate: string }) => {
+      const response = await apiRequest("PUT", `/api/arrivals/${data.id}`, {
+        roomNumber: data.roomNumber,
+        numberOfNights: parseInt(data.numberOfNights),
+        checkInDate: data.checkInDate,
+      });
+      return await response.json();
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['/api/arrivals', hotelId] });
+      toast({
+        title: "Updated",
+        description: "Reservation updated successfully",
+      });
+      setIsEditingGuest(false);
+      setSelectedGuest(null);
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: error.message || "Failed to update reservation",
+      });
+    },
+  });
+
+  const handleEditGuest = () => {
+    if (selectedGuest) {
+      // Calculate current number of nights
+      const checkIn = new Date(selectedGuest.checkInDate);
+      const checkOut = new Date(selectedGuest.checkOutDate);
+      const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+      
+      setEditGuestData({
+        roomNumber: selectedGuest.roomNumber,
+        numberOfNights: nights.toString(),
+      });
+      setIsEditingGuest(true);
+    }
+  };
+
+  const handleSaveEdit = () => {
+    if (selectedGuest && editGuestData.roomNumber && editGuestData.numberOfNights) {
+      updateArrivalMutation.mutate({
+        id: selectedGuest.id,
+        roomNumber: editGuestData.roomNumber,
+        numberOfNights: editGuestData.numberOfNights,
+        checkInDate: selectedGuest.checkInDate,
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingGuest(false);
+    setEditGuestData({
+      roomNumber: "",
+      numberOfNights: "",
+    });
   };
 
   const handleRefresh = () => {
@@ -572,110 +638,161 @@ export default function HotelDashboard() {
       </main>
 
       {/* Guest Details Dialog */}
-      <Dialog open={!!selectedGuest} onOpenChange={(open) => !open && setSelectedGuest(null)}>
+      <Dialog open={!!selectedGuest} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedGuest(null);
+          setIsEditingGuest(false);
+        }
+      }}>
         <DialogContent data-testid="dialog-guest-details">
           <DialogHeader>
             <DialogTitle className="text-2xl">{selectedGuest?.guestName}</DialogTitle>
-            <DialogDescription>Reservation Details</DialogDescription>
+            <DialogDescription>
+              {isEditingGuest ? "Edit Reservation Details" : "Reservation Details"}
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6 py-4">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
-                  <Calendar className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Reservation Number</p>
-                  <p className="font-medium" data-testid="text-reservation-number">
-                    {selectedGuest?.reservationNumber}
-                  </p>
-                </div>
-              </div>
+            {!isEditingGuest ? (
+              // View mode
+              <>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                      <Calendar className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Reservation Number</p>
+                      <p className="font-medium" data-testid="text-reservation-number">
+                        {selectedGuest?.reservationNumber}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
-                  <MapPin className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Room Number</p>
-                  <p className="font-medium" data-testid="text-room-number">
-                    {selectedGuest?.roomNumber}
-                  </p>
-                </div>
-              </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                      <MapPin className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Room Number</p>
+                      <p className="font-medium" data-testid="text-room-number">
+                        {selectedGuest?.roomNumber}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
-                  <Calendar className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Check-in Date</p>
-                  <p className="font-medium" data-testid="text-checkin-date">
-                    {selectedGuest?.checkInDate}
-                  </p>
-                </div>
-              </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                      <Calendar className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Check-in Date</p>
+                      <p className="font-medium" data-testid="text-checkin-date">
+                        {selectedGuest?.checkInDate}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
-                  <Calendar className="h-5 w-5 text-primary" />
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                      <Calendar className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Check-out Date</p>
+                      <p className="font-medium" data-testid="text-checkout-date">
+                        {selectedGuest?.checkOutDate}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Check-out Date</p>
-                  <p className="font-medium" data-testid="text-checkout-date">
-                    {selectedGuest?.checkOutDate}
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
-                  <Mail className="h-5 w-5 text-primary" />
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button 
+                    data-testid="button-edit-guest"
+                    variant="outline"
+                    onClick={handleEditGuest}
+                    className="flex-1"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                  <Button 
+                    data-testid="button-send-to-tablet-dialog"
+                    onClick={() => {
+                      if (selectedGuest) {
+                        handleSendToTablet(selectedGuest.id);
+                        setSelectedGuest(null);
+                      }
+                    }}
+                    className="flex-1"
+                  >
+                    Send to Tablet
+                  </Button>
+                  <Button 
+                    data-testid="button-close-dialog"
+                    variant="ghost" 
+                    onClick={() => setSelectedGuest(null)}
+                    className="flex-1"
+                  >
+                    Close
+                  </Button>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Email</p>
-                  <p className="font-medium" data-testid="text-guest-email">
-                    {(selectedGuest?.guestName?.toLowerCase()?.replace(' ', '.')) ?? 'guest'}@email.com
-                  </p>
-                </div>
-              </div>
+              </>
+            ) : (
+              // Edit mode
+              <>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Room Number *</label>
+                    <input
+                      type="text"
+                      data-testid="input-edit-room-number"
+                      placeholder="302"
+                      value={editGuestData.roomNumber}
+                      onChange={(e) => setEditGuestData({ ...editGuestData, roomNumber: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md bg-background"
+                    />
+                  </div>
 
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
-                  <Phone className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Phone</p>
-                  <p className="font-medium" data-testid="text-guest-phone">
-                    +1 (555) 123-4567
-                  </p>
-                </div>
-              </div>
-            </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Number of Nights *</label>
+                    <input
+                      type="number"
+                      data-testid="input-edit-nights"
+                      placeholder="3"
+                      min="1"
+                      value={editGuestData.numberOfNights}
+                      onChange={(e) => setEditGuestData({ ...editGuestData, numberOfNights: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md bg-background"
+                    />
+                  </div>
 
-            <div className="flex gap-2 pt-4">
-              <Button 
-                data-testid="button-send-to-tablet-dialog"
-                onClick={() => {
-                  if (selectedGuest) {
-                    handleSendToTablet(selectedGuest.id);
-                    setSelectedGuest(null);
-                  }
-                }}
-                className="flex-1"
-              >
-                Send to Tablet
-              </Button>
-              <Button 
-                data-testid="button-close-dialog"
-                variant="outline" 
-                onClick={() => setSelectedGuest(null)}
-                className="flex-1"
-              >
-                Close
-              </Button>
-            </div>
+                  <div className="text-sm text-muted-foreground">
+                    Check-in date: {selectedGuest?.checkInDate}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button 
+                    data-testid="button-save-edit"
+                    onClick={handleSaveEdit}
+                    disabled={updateArrivalMutation.isPending}
+                    className="flex-1"
+                  >
+                    {updateArrivalMutation.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                  <Button 
+                    data-testid="button-cancel-edit"
+                    variant="outline"
+                    onClick={handleCancelEdit}
+                    disabled={updateArrivalMutation.isPending}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
