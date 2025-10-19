@@ -54,6 +54,16 @@ Preferred communication style: Simple, everyday language.
 
 ### October 19, 2025
 
+#### Dashboard Auto-Switch & Full Contract Details View
+- **✅ WebSocket Auto-Refresh**: Dashboard now automatically refreshes arrivals and switches to "Completed" tab when a guest submits their signature on the tablet. Includes success toast notification for immediate feedback
+- **✅ Full Contract Details Dialog**: When viewing completed arrivals (eye icon), the system now fetches and displays complete contract information including:
+  - Guest Information (name, email, phone, ID number)
+  - Reservation Details (reservation number, room, dates, number of nights, room type)
+  - Full Terms & Conditions text (fetched from hotel settings with fallback)
+  - Digital Signature image with timestamp
+- **✅ Enhanced Error Handling**: Added comprehensive error handling for contract fetching with user-friendly toast notifications for failed requests, missing contract IDs, or network errors. Falls back to basic guest info dialog on errors
+- **✅ E2E Testing**: Verified complete flow with automated tests - contract viewing displays all required sections correctly
+
 #### Tablet Signature UI Improvements & Check-in Flow Fix
 - **✅ Changed "Save Signature" button to "Submit"**: Updated tablet signature page button text from "Save Signature" to "Submit" for clearer guest-facing language
 - **✅ Contract Status Auto-Completion**: When guests click "Submit" on the tablet, the contract status is automatically set to "completed" (not "pending")
