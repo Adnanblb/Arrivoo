@@ -38,7 +38,7 @@ export default function DeviceRegistration() {
     resolver: zodResolver(deviceSchema),
     defaultValues: {
       deviceName: "",
-      hotelId: "89e84b73-cca7-4bd4-9dba-af421b2805f6", // Default hotel ID
+      hotelId: "f39d5d3b-a803-42c6-a266-e84fbbad98dd", // Grand Plaza Hotel (Supabase)
     },
   });
 

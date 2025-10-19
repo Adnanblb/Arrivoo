@@ -56,7 +56,7 @@ export default function ContractSearch() {
   const handleSearch = async (data: SearchForm) => {
     setIsLoading(true);
     const params = new URLSearchParams();
-    params.append("hotelId", "89e84b73-cca7-4bd4-9dba-af421b2805f6"); // Mock hotel ID
+    params.append("hotelId", "f39d5d3b-a803-42c6-a266-e84fbbad98dd"); // Grand Plaza Hotel (Supabase)
 
     if (data.guestName) params.append("guestName", data.guestName);
     if (data.roomNumber) params.append("roomNumber", data.roomNumber);

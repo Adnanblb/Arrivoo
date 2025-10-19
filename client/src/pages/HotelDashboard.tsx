@@ -20,8 +20,8 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useLocation } from "wouter";
 import type { PmsConfiguration } from "@shared/schema";
 
-// TODO: Remove mock data when implementing real backend
-const MOCK_HOTEL_ID = "89e84b73-cca7-4bd4-9dba-af421b2805f6"; // Grand Plaza Hotel
+// Grand Plaza Hotel ID from Supabase database
+const MOCK_HOTEL_ID = "f39d5d3b-a803-42c6-a266-e84fbbad98dd"; // Grand Plaza Hotel
 
 // Helper function to format PMS type names
 function formatPmsName(pmsType: string): string {

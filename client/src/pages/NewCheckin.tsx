@@ -35,7 +35,7 @@ export default function NewCheckin() {
     mutationFn: async (data: LookupForm) => {
       const response = await apiRequest("POST", "/api/pms/lookup", {
         confirmationNumber: data.confirmationNumber,
-        hotelId: "89e84b73-cca7-4bd4-9dba-af421b2805f6", // Mock hotel ID - in production, get from auth context
+        hotelId: "f39d5d3b-a803-42c6-a266-e84fbbad98dd", // Grand Plaza Hotel (Supabase)
       });
       return await response.json() as PmsReservation;
     },
