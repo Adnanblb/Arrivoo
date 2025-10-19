@@ -74,6 +74,7 @@ export interface IStorage {
   createArrival(arrival: InsertArrival): Promise<Arrival>;
   getArrivalsByHotel(hotelId: string, date?: string): Promise<Arrival[]>;
   updateArrivalCheckInStatus(id: string, contractId: string): Promise<Arrival | undefined>;
+  updateArrival(id: string, updates: Partial<InsertArrival>): Promise<Arrival | undefined>;
   deleteOldArrivals(hotelId: string, beforeDate: string): Promise<void>;
   deleteArrival(id: string): Promise<void>;
   upsertArrival(arrival: InsertArrival): Promise<Arrival>;
@@ -390,6 +391,18 @@ export class DbStorage implements IStorage {
         hasCheckedIn: true,
         checkedInAt: new Date(),
         contractId: contractId,
+        updatedAt: new Date(),
+      })
+      .where(eq(arrivals.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateArrival(id: string, updates: Partial<InsertArrival>): Promise<Arrival | undefined> {
+    const result = await db
+      .update(arrivals)
+      .set({
+        ...updates,
         updatedAt: new Date(),
       })
       .where(eq(arrivals.id, id))

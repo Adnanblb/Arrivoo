@@ -358,6 +358,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update an arrival (room number and number of nights)
+  app.put("/api/arrivals/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { roomNumber, numberOfNights, checkInDate } = req.body;
+      
+      const updates: any = {};
+      
+      if (roomNumber !== undefined) {
+        updates.roomNumber = roomNumber;
+      }
+      
+      if (numberOfNights !== undefined && checkInDate) {
+        updates.numberOfNights = numberOfNights;
+        // Calculate new checkout date
+        const checkIn = new Date(checkInDate);
+        const checkOut = new Date(checkIn);
+        checkOut.setDate(checkOut.getDate() + numberOfNights);
+        updates.checkOutDate = checkOut.toISOString().split('T')[0];
+      }
+      
+      const updatedArrival = await storage.updateArrival(id, updates);
+      res.json(updatedArrival);
+    } catch (error) {
+      console.error("Update arrival error:", error);
+      res.status(500).json({ error: "Failed to update arrival" });
+    }
+  });
+
   // Device Management - Register/Get Devices (Tablets)
   app.post("/api/devices", async (req, res) => {
     try {
