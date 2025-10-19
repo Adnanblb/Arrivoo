@@ -79,31 +79,6 @@ export default function Login() {
     setLocation("/hotel");
   };
 
-  // Dev login for Merya Hotels
-  const meryaLoginMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/auth/dev-login-merya", {});
-      return await response.json();
-    },
-    onSuccess: async (data) => {
-      if (data.success) {
-        await queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-        toast({
-          title: "Merya Hotels Login",
-          description: "Logged in as Merya Hotels!",
-        });
-        setLocation("/hotel");
-      }
-    },
-    onError: (error: any) => {
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: error.message || "Failed to login as Merya Hotels",
-      });
-    },
-  });
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <Card className="w-full max-w-md">
@@ -197,15 +172,6 @@ export default function Login() {
             Forgot Password?
           </Button>
           {/* Temporary dev bypass */}
-          <Button
-            variant="outline"
-            className="text-sm w-full"
-            onClick={() => meryaLoginMutation.mutate()}
-            disabled={meryaLoginMutation.isPending}
-            data-testid="button-merya-login"
-          >
-            {meryaLoginMutation.isPending ? "Logging in..." : "🏨 Login as Merya Hotels"}
-          </Button>
           <Button
             variant="outline"
             className="text-sm w-full"
