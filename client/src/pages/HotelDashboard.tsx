@@ -21,6 +21,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useLocation } from "wouter";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useAuth } from "@/contexts/AuthContext";
+import { format } from "date-fns";
 import type { PmsConfiguration, RegistrationContract } from "@shared/schema";
 
 // Helper function to format PMS type names
@@ -401,7 +402,7 @@ export default function HotelDashboard() {
                   {hotelName}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Today's Arrivals - Oct 11, 2025
+                  Today's Arrivals - {format(new Date(), "MMM dd, yyyy")}
                 </p>
               </div>
             </div>
