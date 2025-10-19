@@ -137,3 +137,18 @@ Preferred communication style: Simple, everyday language.
 - **✅ Multi-Tenant Device Registration**: Tablets register to specific hotels via hotelId parameter
   - Backend WebSocket associates device with hotelId for targeted communication
   - Device list filtered by hotelId - each hotel sees only their own tablets
+
+#### Tablet Registration & WebSocket Improvements
+- **✅ Auto-Create Missing Devices**: WebSocket now automatically creates database entries when tablets connect
+  - If device sends `register_device` but doesn't exist in database, system creates it with proper metadata
+  - Prevents "can't find the tablet" issue where tablets connected but weren't queryable
+  - Includes deviceName, deviceType, browser, OS, screen size from WebSocket payload
+- **✅ Hotel ID Mismatch Auto-Correction**: Tablets with wrong hotelId are automatically fixed on reconnection
+  - When tablet reconnects via WebSocket, system checks if stored hotelId matches incoming hotelId
+  - If mismatch detected, device is automatically moved to correct hotel in database
+  - Fixes tablets that were registered to wrong hotel during testing or migration
+  - Ensures "Send to Tablet" dropdown shows all connected tablets for the correct hotel
+- **✅ Enhanced Device Metadata**: Frontend pages send deviceName in WebSocket payload
+  - DeviceRegistration.tsx includes device name when registering
+  - TabletSignature.tsx includes device name when reconnecting
+  - Ensures auto-created devices have friendly names instead of "Auto-registered tablet"
