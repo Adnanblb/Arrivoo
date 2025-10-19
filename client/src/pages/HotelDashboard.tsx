@@ -14,11 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar, Plus, Search, Settings } from "lucide-react";
+import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar, Plus, Search, Settings, FileText } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLocation } from "wouter";
-import type { PmsConfiguration } from "@shared/schema";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import type { PmsConfiguration, RegistrationContract } from "@shared/schema";
 
 // Grand Plaza Hotel ID from Supabase database
 const MOCK_HOTEL_ID = "f39d5d3b-a803-42c6-a266-e84fbbad98dd"; // Grand Plaza Hotel
@@ -86,6 +88,7 @@ export default function HotelDashboard() {
   const { theme, toggleTheme } = useTheme();
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
   const [selectedGuest, setSelectedGuest] = useState<typeof mockArrivals[0] | null>(null);
+  const [selectedContract, setSelectedContract] = useState<RegistrationContract | null>(null);
   const [sendToTabletGuest, setSendToTabletGuest] = useState<typeof mockArrivals[0] | null>(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -100,9 +103,38 @@ export default function HotelDashboard() {
     queryKey: ['/api/pms-config', MOCK_HOTEL_ID],
   });
 
+  // Fetch hotel details for contract terms
+  const { data: hotel } = useQuery({
+    queryKey: ["/api/hotels", MOCK_HOTEL_ID],
+    queryFn: async () => {
+      const response = await fetch(`/api/hotels/${MOCK_HOTEL_ID}`);
+      if (!response.ok) throw new Error("Failed to fetch hotel");
+      return response.json();
+    },
+  });
+
   // Fetch real arrivals from API
   const { data: apiArrivals = [], refetch: refetchArrivals } = useQuery<any[]>({
     queryKey: ['/api/arrivals', MOCK_HOTEL_ID],
+  });
+
+  // WebSocket connection for real-time updates
+  useWebSocket({
+    onMessage: (message) => {
+      if (message.type === "contract_status_update" && message.payload?.status === "signed") {
+        // Refetch arrivals to get updated check-in status
+        refetchArrivals();
+        
+        // Auto-switch to completed tab
+        setFilter("completed");
+        
+        // Show success toast
+        toast({
+          title: "Check-in Completed",
+          description: "Guest has successfully completed their check-in",
+        });
+      }
+    },
   });
 
   // Map API arrivals to the format expected by ArrivalsTable
@@ -169,11 +201,50 @@ export default function HotelDashboard() {
     }
   };
 
-  const handleViewDetails = (id: string) => {
+  const handleViewDetails = async (id: string) => {
     const guest = arrivals.find((a) => a.id === id);
-    if (guest) {
-      setSelectedGuest(guest);
+    if (!guest) return;
+
+    // If guest is completed, fetch the full contract
+    if (guest.status === "completed") {
+      try {
+        // Find the arrival data to get the contract ID
+        const arrivalData = apiArrivals.find(a => a.id === id);
+        const contractId = arrivalData?.contractId || arrivalData?.contract_id;
+        
+        if (contractId) {
+          // Fetch the full contract
+          const response = await fetch(`/api/contracts/${contractId}`);
+          if (response.ok) {
+            const contract = await response.json();
+            setSelectedContract(contract);
+            return;
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Failed to Load Contract",
+              description: "Unable to fetch contract details. Showing basic information instead.",
+            });
+          }
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Contract Not Found",
+            description: "This arrival doesn't have an associated contract yet.",
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch contract:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "An error occurred while loading the contract.",
+        });
+      }
     }
+    
+    // Fallback to showing basic guest info for pending or on error
+    setSelectedGuest(guest);
   };
 
   const handleRefresh = () => {
@@ -457,6 +528,120 @@ export default function HotelDashboard() {
                 Close
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Full Contract Details Dialog (for completed check-ins) */}
+      <Dialog open={!!selectedContract} onOpenChange={(open) => { if (!open) setSelectedContract(null); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh]" data-testid="dialog-contract-details">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <FileText className="h-6 w-6 text-primary" />
+              Registration Contract
+            </DialogTitle>
+            <DialogDescription>
+              Completed check-in for {selectedContract?.guestName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="max-h-[70vh] pr-4">
+            <div className="space-y-6 py-4">
+              {/* Guest Information */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Guest Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Guest Name</p>
+                    <p className="font-medium" data-testid="text-contract-guest-name">{selectedContract?.guestName}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium" data-testid="text-contract-email">{selectedContract?.email || "Not provided"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <p className="font-medium" data-testid="text-contract-phone">{selectedContract?.phone || "Not provided"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">ID Number</p>
+                    <p className="font-medium">{selectedContract?.idNumber || "Not provided"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Reservation Details */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Reservation Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Reservation Number</p>
+                    <p className="font-medium font-mono" data-testid="text-contract-reservation">{selectedContract?.reservationNumber}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Room Number</p>
+                    <p className="font-medium">{selectedContract?.roomNumber}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Check-in Date</p>
+                    <p className="font-medium">{selectedContract?.arrivalDate}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Check-out Date</p>
+                    <p className="font-medium">{selectedContract?.departureDate}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Number of Nights</p>
+                    <p className="font-medium">{selectedContract?.numberOfNights}</p>
+                  </div>
+                  {selectedContract?.roomType && (
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Room Type</p>
+                      <p className="font-medium">{selectedContract.roomType}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Contract Terms */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Terms & Conditions</h3>
+                <div className="bg-muted/50 rounded-md p-4 border">
+                  <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed" data-testid="text-contract-terms">
+                    {hotel?.contractTerms || "REGISTRATION AGREEMENT\n\nBy signing this registration form, the guest acknowledges and agrees to the terms and conditions of the hotel."}
+                  </pre>
+                </div>
+              </div>
+
+              {/* Digital Signature */}
+              {selectedContract?.signatureDataUrl && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Digital Signature</h3>
+                  <div className="bg-muted/50 rounded-md p-4 border">
+                    <img
+                      src={selectedContract.signatureDataUrl}
+                      alt="Guest Signature"
+                      className="max-w-md mx-auto border rounded bg-white"
+                      data-testid="img-contract-signature"
+                    />
+                    <p className="text-sm text-muted-foreground text-center mt-2">
+                      Signed on {selectedContract.registeredAt ? new Date(selectedContract.registeredAt).toLocaleString() : "Unknown date"}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+
+          <div className="flex gap-2 pt-4 border-t">
+            <Button 
+              data-testid="button-close-contract"
+              variant="outline" 
+              onClick={() => setSelectedContract(null)}
+              className="flex-1"
+            >
+              Close
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
