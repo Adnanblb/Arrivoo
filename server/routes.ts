@@ -59,6 +59,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create Manual Check-In Contract
+  app.post("/api/contracts/manual", async (req, res) => {
+    try {
+      const { hotelId, guestName, roomNumber, arrivalDate, departureDate, numberOfNights } = req.body;
+
+      // Validate required fields
+      if (!hotelId || !guestName || !roomNumber || !arrivalDate) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Calculate departure date if numberOfNights is provided
+      let finalDepartureDate = departureDate;
+      let finalNumberOfNights = numberOfNights;
+
+      if (!departureDate && numberOfNights) {
+        const checkInDate = new Date(arrivalDate);
+        checkInDate.setDate(checkInDate.getDate() + numberOfNights);
+        finalDepartureDate = checkInDate.toISOString().split('T')[0];
+      } else if (departureDate && !numberOfNights) {
+        const checkIn = new Date(arrivalDate);
+        const checkOut = new Date(departureDate);
+        const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
+        finalNumberOfNights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
+
+      // Generate a reservation number
+      const reservationNumber = `MAN-${Date.now()}`;
+
+      // Create the contract
+      const contractData = {
+        hotelId,
+        guestName,
+        roomNumber,
+        arrivalDate,
+        departureDate: finalDepartureDate,
+        numberOfNights: finalNumberOfNights,
+        reservationNumber,
+        status: "pending",
+        pmsSource: "manual",
+      };
+
+      const contract = await storage.createContract(contractData);
+      res.json(contract);
+    } catch (error) {
+      console.error("Create manual contract error:", error);
+      res.status(500).json({ error: "Failed to create manual contract" });
+    }
+  });
+
   // Create Registration Contract
   app.post("/api/contracts", async (req, res) => {
     try {
