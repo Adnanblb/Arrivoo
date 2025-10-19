@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pg from "pg";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupCronJobs } from "./services/cron";
@@ -10,6 +11,9 @@ import { setupWebSocket } from "./websocket";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve attached_assets folder (hotel logos and other uploaded files)
+app.use('/attached_assets', express.static(path.resolve(import.meta.dirname, '../attached_assets')));
 
 // Set up PostgreSQL session store
 const PgSession = connectPgSimple(session);

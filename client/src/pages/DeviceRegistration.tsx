@@ -34,11 +34,15 @@ export default function DeviceRegistration() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   
+  // Get hotelId from URL parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const hotelIdFromUrl = urlParams.get('hotelId') || "";
+  
   const form = useForm<DeviceForm>({
     resolver: zodResolver(deviceSchema),
     defaultValues: {
       deviceName: "",
-      hotelId: "f39d5d3b-a803-42c6-a266-e84fbbad98dd", // Grand Plaza Hotel (Supabase)
+      hotelId: hotelIdFromUrl,
     },
   });
 

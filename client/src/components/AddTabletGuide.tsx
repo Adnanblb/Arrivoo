@@ -12,14 +12,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tablet, Copy, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeSVG } from "qrcode.react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function AddTabletGuide() {
   const [isOpen, setIsOpen] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  // Generate the tablet registration URL
-  const tabletUrl = `${window.location.origin}/tablet/register`;
+  // Generate the tablet registration URL with hotel ID
+  // Only generate URL if user and hotelId are available
+  const tabletUrl = user?.hotelId 
+    ? `${window.location.origin}/tablet/register?hotelId=${user.hotelId}`
+    : "";
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(tabletUrl);
@@ -32,10 +37,23 @@ export function AddTabletGuide() {
     setTimeout(() => setCopiedUrl(false), 2000);
   };
 
+  // Don't allow opening if no hotel ID available
+  const handleOpenChange = (open: boolean) => {
+    if (open && !user?.hotelId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Hotel information not available. Please refresh the page.",
+      });
+      return;
+    }
+    setIsOpen(open);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" data-testid="button-add-tablet-guide">
+        <Button variant="outline" data-testid="button-add-tablet-guide" disabled={!user?.hotelId}>
           <Tablet className="h-4 w-4 mr-2" />
           How to Add Tablet
         </Button>
