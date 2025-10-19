@@ -91,6 +91,7 @@ export default function HotelDashboard() {
   const [selectedContract, setSelectedContract] = useState<RegistrationContract | null>(null);
   const [sendToTabletGuest, setSendToTabletGuest] = useState<typeof mockArrivals[0] | null>(null);
   const [showManualCheckIn, setShowManualCheckIn] = useState(false);
+  const [shouldAutoSendToTablet, setShouldAutoSendToTablet] = useState(false);
   const [manualCheckInData, setManualCheckInData] = useState({
     guestName: "",
     roomNumber: "",
@@ -352,9 +353,13 @@ export default function HotelDashboard() {
       // Invalidate arrivals cache to refresh the dashboard
       await queryClient.invalidateQueries({ queryKey: ['/api/arrivals', hotelId] });
       
+      const message = shouldAutoSendToTablet 
+        ? "Manual check-in created successfully. Send it to a tablet now."
+        : "Manual check-in saved successfully";
+      
       toast({
         title: "Check-In Created",
-        description: "Manual check-in created successfully. Send it to a tablet now.",
+        description: message,
       });
       setShowManualCheckIn(false);
       // Reset form
@@ -365,16 +370,19 @@ export default function HotelDashboard() {
         checkOutDate: "",
         numberOfNights: "",
       });
-      // Open send to tablet dialog with the new contract
-      setSendToTabletGuest({
-        id: contract.id,
-        guestName: contract.guestName,
-        reservationNumber: contract.reservationNumber,
-        roomNumber: contract.roomNumber,
-        checkInDate: contract.arrivalDate,
-        checkOutDate: contract.departureDate,
-        status: "pending" as const,
-      });
+      
+      // Conditionally open send to tablet dialog
+      if (shouldAutoSendToTablet) {
+        setSendToTabletGuest({
+          id: contract.id,
+          guestName: contract.guestName,
+          reservationNumber: contract.reservationNumber,
+          roomNumber: contract.roomNumber,
+          checkInDate: contract.arrivalDate,
+          checkOutDate: contract.departureDate,
+          status: "pending" as const,
+        });
+      }
     },
     onError: (error: any) => {
       toast({
@@ -890,21 +898,36 @@ export default function HotelDashboard() {
             <p className="text-xs text-muted-foreground">Provide either check-out date or number of nights *</p>
           </div>
 
-          <div className="flex gap-2 pt-4 border-t">
+          <div className="flex flex-col gap-2 pt-4 border-t">
             <Button
-              data-testid="button-create-checkin"
-              onClick={handleManualCheckInSubmit}
+              data-testid="button-create-and-send"
+              onClick={() => {
+                setShouldAutoSendToTablet(true);
+                handleManualCheckInSubmit();
+              }}
               disabled={createManualCheckInMutation.isPending}
-              className="flex-1"
+              className="w-full"
             >
               {createManualCheckInMutation.isPending ? "Creating..." : "Create & Send to Tablet"}
             </Button>
             <Button
-              data-testid="button-cancel-checkin"
+              data-testid="button-save-only"
               variant="outline"
+              onClick={() => {
+                setShouldAutoSendToTablet(false);
+                handleManualCheckInSubmit();
+              }}
+              disabled={createManualCheckInMutation.isPending}
+              className="w-full"
+            >
+              Save Only
+            </Button>
+            <Button
+              data-testid="button-cancel-checkin"
+              variant="ghost"
               onClick={() => setShowManualCheckIn(false)}
               disabled={createManualCheckInMutation.isPending}
-              className="flex-1"
+              className="w-full"
             >
               Cancel
             </Button>
