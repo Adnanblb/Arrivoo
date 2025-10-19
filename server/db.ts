@@ -11,7 +11,10 @@ if (!databaseUrl) {
   );
 }
 
+// CRITICAL: For Supabase Transaction Pooler (port 6543), we MUST set prepare: false
+// This is required because the pooler doesn't support prepared statements
 export const client = postgres(databaseUrl, {
   ssl: 'require',
+  prepare: false, // Required for Supabase Transaction Pooler
 });
 export const db = drizzle(client, { schema });
