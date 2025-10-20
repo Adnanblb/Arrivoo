@@ -71,7 +71,7 @@ export interface IStorage {
   getContract(id: string): Promise<RegistrationContract | undefined>;
   searchContracts(params: SearchContracts): Promise<RegistrationContract[]>;
   getRecentContracts(hotelId: string, limit?: number): Promise<RegistrationContract[]>;
-  updateContractSignature(id: string, signatureDataUrl: string, email?: string, phone?: string): Promise<RegistrationContract | undefined>;
+  updateContractSignature(id: string, signatureDataUrl: string, email?: string, phone?: string, firstName?: string, lastName?: string, address?: string, company?: string, vatNumber?: string): Promise<RegistrationContract | undefined>;
 
   // Arrivals management
   createArrival(arrival: InsertArrival): Promise<Arrival>;
@@ -303,7 +303,12 @@ export class DbStorage implements IStorage {
     id: string, 
     signatureDataUrl: string, 
     email?: string, 
-    phone?: string
+    phone?: string,
+    firstName?: string,
+    lastName?: string,
+    address?: string,
+    company?: string,
+    vatNumber?: string
   ): Promise<RegistrationContract | undefined> {
     // First, check if contract exists
     const existingContract = await db
@@ -329,6 +334,26 @@ export class DbStorage implements IStorage {
     
     if (phone !== undefined && phone !== null) {
       updateData.phone = phone;
+    }
+    
+    if (firstName !== undefined && firstName !== null) {
+      updateData.firstName = firstName;
+    }
+    
+    if (lastName !== undefined && lastName !== null) {
+      updateData.lastName = lastName;
+    }
+    
+    if (address !== undefined && address !== null) {
+      updateData.address = address;
+    }
+    
+    if (company !== undefined && company !== null) {
+      updateData.company = company;
+    }
+    
+    if (vatNumber !== undefined && vatNumber !== null) {
+      updateData.vatNumber = vatNumber;
     }
     
     const result = await db

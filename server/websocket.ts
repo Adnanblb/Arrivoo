@@ -197,10 +197,10 @@ export function setupWebSocket(server: Server) {
           }
 
           case "contract_signed": {
-            const { contractId, assignmentId, signatureDataUrl, email, phone } = message.payload;
+            const { contractId, assignmentId, signatureDataUrl, email, phone, firstName, lastName, address, company, vatNumber } = message.payload;
             
             // Update contract with signature and contact information
-            const updatedContract = await storage.updateContractSignature(contractId, signatureDataUrl, email, phone);
+            const updatedContract = await storage.updateContractSignature(contractId, signatureDataUrl, email, phone, firstName, lastName, address, company, vatNumber);
             
             // Update assignment status
             await storage.updateContractAssignmentStatus(
@@ -232,7 +232,12 @@ export function setupWebSocket(server: Server) {
                   status: "signed",
                   signatureDataUrl,
                   email,
-                  phone
+                  phone,
+                  firstName,
+                  lastName,
+                  address,
+                  company,
+                  vatNumber
                 }
               });
             }

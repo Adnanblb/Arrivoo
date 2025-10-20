@@ -51,8 +51,13 @@ export default function TabletSignature() {
   const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [signaturePad, setSignaturePad] = useState<SignatureCanvas | null>(null);
   const [isSigned, setIsSigned] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [company, setCompany] = useState("");
+  const [vatNumber, setVatNumber] = useState("");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -83,8 +88,13 @@ export default function TabletSignature() {
         setCurrentContract(contract);
         setAssignmentId(assignmentId || contractId);
         setIsSigned(false);
+        setFirstName(contract.firstName || "");
+        setLastName(contract.lastName || "");
         setEmail(contract.email || "");
         setPhone(contract.phone || "");
+        setAddress(contract.address || "");
+        setCompany(contract.company || "");
+        setVatNumber(contract.vatNumber || "");
         
         // Clear signature pad if it exists
         if (signaturePad) {
@@ -155,8 +165,13 @@ export default function TabletSignature() {
         contractId: currentContract?.id,
         assignmentId,
         signatureDataUrl,
+        firstName,
+        lastName,
         email,
         phone,
+        address,
+        company,
+        vatNumber,
       },
     });
     
@@ -172,8 +187,13 @@ export default function TabletSignature() {
       setCurrentContract(null);
       setAssignmentId(null);
       setIsSigned(false);
+      setFirstName("");
+      setLastName("");
       setEmail("");
       setPhone("");
+      setAddress("");
+      setCompany("");
+      setVatNumber("");
       signaturePad?.clear();
     }, 2000);
   };
@@ -290,6 +310,32 @@ export default function TabletSignature() {
                 </p>
               </div>
               <div>
+                <Label htmlFor="firstName" className="text-sm font-medium text-muted-foreground">First Name</Label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  placeholder="First Name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  disabled={isSigned}
+                  className="mt-1"
+                  data-testid="input-first-name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="lastName" className="text-sm font-medium text-muted-foreground">Last Name</Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  placeholder="Last Name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  disabled={isSigned}
+                  className="mt-1"
+                  data-testid="input-last-name"
+                />
+              </div>
+              <div>
                 <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">Email Address</Label>
                 <Input
                   id="email"
@@ -313,6 +359,45 @@ export default function TabletSignature() {
                   disabled={isSigned}
                   className="mt-1"
                   data-testid="input-phone"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="address" className="text-sm font-medium text-muted-foreground">Address</Label>
+                <Input
+                  id="address"
+                  type="text"
+                  placeholder="Full Address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  disabled={isSigned}
+                  className="mt-1"
+                  data-testid="input-address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="company" className="text-sm font-medium text-muted-foreground">Company</Label>
+                <Input
+                  id="company"
+                  type="text"
+                  placeholder="Company Name"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  disabled={isSigned}
+                  className="mt-1"
+                  data-testid="input-company"
+                />
+              </div>
+              <div>
+                <Label htmlFor="vatNumber" className="text-sm font-medium text-muted-foreground">VAT Number</Label>
+                <Input
+                  id="vatNumber"
+                  type="text"
+                  placeholder="VAT Number"
+                  value={vatNumber}
+                  onChange={(e) => setVatNumber(e.target.value)}
+                  disabled={isSigned}
+                  className="mt-1"
+                  data-testid="input-vat-number"
                 />
               </div>
               <div>

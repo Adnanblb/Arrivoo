@@ -128,9 +128,13 @@ export const registrationContracts = pgTable("registration_contracts", {
   
   // Guest Information
   guestName: text("guest_name").notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
   email: text("email"),
   phone: text("phone"),
   address: text("address"),
+  company: text("company"),
+  vatNumber: text("vat_number"),
   idNumber: text("id_number"), // Passport or ID number
   
   // Reservation Details
