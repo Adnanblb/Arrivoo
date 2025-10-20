@@ -141,6 +141,7 @@ export default function AdminPortal() {
       address: formData.get("address") as string,
       phone: formData.get("phone") as string,
       email: formData.get("email") as string,
+      logoUrl: formData.get("logoUrl") as string || null,
       maxVisibleReservations: parseInt(formData.get("maxVisibleReservations") as string) || 50,
     };
 
@@ -267,6 +268,17 @@ export default function AdminPortal() {
                           type="email"
                           defaultValue={editingHotel?.email}
                           data-testid="input-hotel-email"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="logoUrl">Logo URL</Label>
+                        <Input
+                          id="logoUrl"
+                          name="logoUrl"
+                          type="url"
+                          placeholder="https://example.com/logo.png"
+                          defaultValue={editingHotel?.logoUrl}
+                          data-testid="input-hotel-logo-url"
                         />
                       </div>
                       <div className="space-y-2">
