@@ -80,6 +80,7 @@ export const hotels = pgTable("hotels", {
   email: text("email"),
   logoUrl: text("logo_url"), // Hotel logo URL
   contractTerms: text("contract_terms"), // Custom contract terms for guest registration
+  maxVisibleReservations: integer("max_visible_reservations").default(50), // Admin-controlled limit
   createdAt: timestamp("created_at").defaultNow(),
 });
 
