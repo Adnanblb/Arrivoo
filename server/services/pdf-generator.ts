@@ -9,8 +9,25 @@ export class PdfGenerator {
   static async generateContractPdf(
     contract: RegistrationContract, 
     res: Response,
-    hotelTerms?: string
+    hotelTerms?: string,
+    hotelLogoUrl?: string,
+    hotelName?: string
   ): Promise<void> {
+    // Fetch hotel logo if URL is provided
+    let logoBuffer: Buffer | null = null;
+    if (hotelLogoUrl) {
+      try {
+        const imageResponse = await fetch(hotelLogoUrl);
+        if (imageResponse.ok) {
+          const arrayBuffer = await imageResponse.arrayBuffer();
+          logoBuffer = Buffer.from(arrayBuffer);
+        }
+      } catch (error) {
+        console.error("Error loading hotel logo:", error);
+        // Continue without logo if it fails to load
+      }
+    }
+
     return new Promise((resolve, reject) => {
       try {
         // Create PDF document
@@ -28,6 +45,36 @@ export class PdfGenerator {
 
         // Pipe PDF to response
         doc.pipe(res);
+
+        // Add hotel logo if available
+        if (logoBuffer) {
+          try {
+            // Add logo centered at the top
+            const logoWidth = 100;
+            const logoHeight = 60;
+            const pageWidth = doc.page.width;
+            const logoX = (pageWidth - logoWidth) / 2;
+
+            doc.image(logoBuffer, logoX, 50, {
+              fit: [logoWidth, logoHeight],
+              align: "center",
+            });
+
+            doc.moveDown(4);
+          } catch (error) {
+            console.error("Error adding logo to PDF:", error);
+            // Continue without logo if it fails to add
+          }
+        }
+
+        // Add hotel name if available
+        if (hotelName) {
+          doc
+            .fontSize(16)
+            .font("Helvetica-Bold")
+            .text(hotelName, { align: "center" });
+          doc.moveDown(0.5);
+        }
 
         // Add header
         doc
