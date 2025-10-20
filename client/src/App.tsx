@@ -9,7 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/Login";
 import VerifyOtp from "@/pages/VerifyOtp";
-import AdminDashboard from "@/pages/AdminDashboard";
+import AdminPortal from "@/pages/AdminPortal";
 import HotelDashboard from "@/pages/HotelDashboard";
 import HotelSettings from "@/pages/HotelSettings";
 import GuestCheckin from "@/pages/GuestCheckin";
@@ -25,7 +25,7 @@ function Router() {
       <Route path="/verify-otp" component={VerifyOtp} />
       <Route path="/admin">
         <ProtectedRoute>
-          <AdminDashboard />
+          <AdminPortal />
         </ProtectedRoute>
       </Route>
       <Route path="/hotel">

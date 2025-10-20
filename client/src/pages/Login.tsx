@@ -54,7 +54,13 @@ export default function Login() {
           title: "Login Successful",
           description: `Welcome back!`,
         });
-        setLocation("/hotel");
+        
+        // Redirect based on user role
+        if (data.user.role === "admin") {
+          setLocation("/admin");
+        } else {
+          setLocation("/hotel");
+        }
       } else if (data.requiresOtp) {
         // OTP flow (currently disabled but kept for future reactivation)
         setLocation(`/verify-otp?userId=${data.userId}&type=login&requires2FA=${data.requires2FA || false}`);

@@ -8,6 +8,7 @@ interface User {
   email: string;
   hotelName: string;
   hotelId: string;
+  role: string;
   logoUrl: string | null;
   twoFactorEnabled: boolean;
 }
