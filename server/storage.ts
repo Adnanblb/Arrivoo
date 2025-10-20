@@ -35,10 +35,12 @@ export interface IStorage {
   // User management
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   updateUserLastLogin(id: string): Promise<void>;
   toggleUser2FA(id: string, enabled: boolean): Promise<User | undefined>;
+  deleteUser(id: string): Promise<void>;
   
   // Login History
   createLoginHistory(history: InsertLoginHistory): Promise<LoginHistory>;
@@ -57,6 +59,7 @@ export interface IStorage {
   createHotel(hotel: InsertHotel): Promise<Hotel>;
   updateHotel(id: string, hotel: Partial<InsertHotel>): Promise<Hotel | undefined>;
   updateHotelContractTerms(id: string, contractTerms: string): Promise<Hotel | undefined>;
+  deleteHotel(id: string): Promise<void>;
 
   // PMS Configuration management
   getPmsConfiguration(hotelId: string): Promise<PmsConfiguration | undefined>;
@@ -124,6 +127,15 @@ export class DbStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const result = await db.insert(users).values(insertUser).returning();
     return result[0];
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    const result = await db.select().from(users).orderBy(desc(users.createdAt));
+    return result;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
   }
 
   // Login History methods
@@ -241,6 +253,10 @@ export class DbStorage implements IStorage {
       .where(eq(hotels.id, id))
       .returning();
     return result[0];
+  }
+
+  async deleteHotel(id: string): Promise<void> {
+    await db.delete(hotels).where(eq(hotels.id, id));
   }
 
   // PMS Configuration methods
