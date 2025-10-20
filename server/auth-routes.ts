@@ -54,6 +54,11 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
           role: user.role,
           logoUrl: user.logoUrl,
           twoFactorEnabled: user.twoFactorEnabled,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          address: user.address,
+          company: user.company,
+          vatNumber: user.vatNumber,
         },
         hotel: hotel,
       });
@@ -493,6 +498,46 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
       }
       console.error("Toggle 2FA error:", error);
       res.status(500).json({ error: "Failed to toggle 2FA" });
+    }
+  });
+  
+  /**
+   * PUT /api/profile
+   * Update user profile information
+   */
+  app.put("/api/profile", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const profileSchema = z.object({
+        firstName: z.string().nullable(),
+        lastName: z.string().nullable(),
+        address: z.string().nullable(),
+        company: z.string().nullable(),
+        vatNumber: z.string().nullable(),
+      });
+      
+      const profileData = profileSchema.parse(req.body);
+      
+      await storage.updateUser(userId, profileData);
+      
+      const updatedUser = await storage.getUser(userId);
+      
+      res.json({
+        success: true,
+        user: updatedUser,
+        message: "Profile updated successfully",
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Update profile error:", error);
+      res.status(500).json({ error: "Failed to update profile" });
     }
   });
 }

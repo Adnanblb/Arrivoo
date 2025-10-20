@@ -12,6 +12,7 @@ import VerifyOtp from "@/pages/VerifyOtp";
 import AdminPortal from "@/pages/AdminPortal";
 import HotelDashboard from "@/pages/HotelDashboard";
 import HotelSettings from "@/pages/HotelSettings";
+import Profile from "@/pages/Profile";
 import GuestCheckin from "@/pages/GuestCheckin";
 import NewCheckin from "@/pages/NewCheckin";
 import ContractSearch from "@/pages/ContractSearch";
@@ -36,6 +37,11 @@ function Router() {
       <Route path="/settings">
         <ProtectedRoute>
           <HotelSettings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/profile">
+        <ProtectedRoute>
+          <Profile />
         </ProtectedRoute>
       </Route>
       <Route path="/new-checkin">
