@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar, Plus, Search, Settings, FileText, Edit } from "lucide-react";
+import { Moon, Sun, LogOut, RefreshCw, Download, Mail, Phone, MapPin, Calendar, Plus, Search, Settings, FileText, Edit, UserCircle } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLocation } from "wouter";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -530,6 +530,14 @@ export default function HotelDashboard() {
                 onClick={() => setLocation("/settings")}
               >
                 <Settings className="h-5 w-5" />
+              </Button>
+              <Button
+                data-testid="button-profile"
+                variant="ghost"
+                size="icon"
+                onClick={() => setLocation("/profile")}
+              >
+                <UserCircle className="h-5 w-5" />
               </Button>
               <Button
                 data-testid="button-toggle-theme"

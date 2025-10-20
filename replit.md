@@ -100,3 +100,18 @@ Preferred communication style: Simple, everyday language.
   - User CRUD operations (create, delete)
   - Access control verification (hotel_staff blocked from /admin)
   - Role-based routing working correctly
+
+#### User Profile Management
+- **✅ Profile Fields**: Added comprehensive profile fields to user schema:
+  - First Name, Last Name (displayed in admin user list)
+  - Address (full address information)
+  - Company (organization affiliation)
+  - VAT Number (for business tax purposes)
+- **✅ Admin User Management**: Updated admin portal to include all profile fields in user creation and editing forms
+- **✅ Profile Page**: Created clean and simple `/profile` page where users can view and edit their personal information
+  - Read-only fields: Email, Hotel assignment (security)
+  - Editable fields: First Name, Last Name, Address, Company, VAT Number
+  - Edit mode with save/cancel functionality
+- **✅ API Route**: Added `PUT /api/profile` endpoint for authenticated users to update their own profile
+- **✅ Navigation**: Added Profile button (user icon) to hotel dashboard header for easy access
+- **✅ Session Table**: Added session table to schema to prevent Drizzle from dropping it during migrations
