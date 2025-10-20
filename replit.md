@@ -35,12 +35,18 @@ Preferred communication style: Simple, everyday language.
 ### System Design Choices
 
 *   **Multi-Tenancy:** Each hotel sees only its own data (arrivals, contracts, devices, logos) based on authenticated user's `hotelId`. Dynamic hotel branding (name, logo) is displayed.
+*   **Role-Based Access Control:** Two user roles supported: `admin` (full system access, can manage all hotels and users) and `hotel_staff` (access to specific hotel data only). Admin users are redirected to `/admin` portal, hotel staff to `/hotel` dashboard after login.
+*   **Admin Portal:** Comprehensive management interface for system administrators. Features include:
+    *   Hotel management: Create, edit, delete hotels with fields for name, address, contact info, and max visible reservations
+    *   User management: Create, edit, delete users, assign roles (admin/hotel_staff), and associate users with specific hotels
+    *   Full CRUD operations with real-time data updates via TanStack Query
+    *   Protected admin-only API routes with `requireAdmin` middleware
 *   **Tablet Management System:** Tablets self-register with unique device IDs, capture metadata, and confirm connectivity via WebSocket. Device status (online/offline) is tracked. A dedicated Tablet Signature View displays guest registration cards, receives real-time updates, captures digital signatures, and auto-submits signed contracts.
 *   **Manual Check-In Workflow:** Allows staff to manually create check-ins with options to either "Create & Send to Tablet" or "Save Only" for later processing.
 *   **Arrival Management:** Features include adding, editing (room number, number of nights with auto-calculated checkout date), and deleting arrival records.
 *   **Contract Management:** Generates professional PDF documents for registration contracts, including guest info, reservation details, full terms & conditions, and digital signatures. The dashboard provides a full contract details view.
 *   **Real-time Updates:** WebSocket for bidirectional communication, automatic reconnection, used for tablet registration and real-time device management. Dashboard auto-refreshes and switches tabs upon guest signature submission.
-*   **Session Management & Authentication:** Secure session management with PostgreSQL-backed session store, `connect-pg-simple`, Express-session, `requireAuth` middleware, and frontend `AuthContext`. Includes login history tracking.
+*   **Session Management & Authentication:** Secure session management with PostgreSQL-backed session store, `connect-pg-simple`, Express-session, role-based middleware (`requireAuth`, `requireAdmin`, `requireHotelStaff`), and frontend `AuthContext`. Includes login history tracking.
 
 ## External Dependencies
 
@@ -57,6 +63,22 @@ Preferred communication style: Simple, everyday language.
 ## Recent Updates
 
 ### October 20, 2025
+
+#### Admin Portal & Multi-Tenant Management System
+- **✅ Role-Based Access Control**: Implemented admin and hotel_staff roles with proper middleware protection
+- **✅ Admin Portal UI**: Comprehensive admin dashboard at `/admin` for managing hotels and users
+- **✅ Hotel Management**: Full CRUD operations for hotels (create, edit, delete) with support for:
+  - Hotel name, address, phone, email
+  - Max visible reservations per hotel (configurable by admin)
+  - Hotel-specific logos (schema support added, upload feature pending)
+- **✅ User Management**: Full CRUD operations for users with role assignment
+  - Create users with email, password, role (admin/hotel_staff)
+  - Associate users with specific hotels
+  - Prevent admins from deleting their own account
+- **✅ Admin Routes**: Protected API endpoints at `/api/admin/*` with requireAdmin middleware
+- **✅ Smart Login Routing**: Admins redirected to `/admin`, hotel staff to `/hotel` based on role
+- **✅ Admin User Created**: System administrator account (albalbisi77@gmail.com) with full access
+- **✅ Storage Layer**: Added getAllUsers(), deleteUser(), deleteHotel() methods to storage interface
 
 #### Removed Reservation Limit
 - **✅ Unlimited Arrivals**: Removed the 8 reservation limit from `getArrivalsByHotel` method

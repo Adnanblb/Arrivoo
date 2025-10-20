@@ -25,7 +25,7 @@ export default function AdminPortal() {
 
   // Redirect if not admin
   if (user && user.role !== "admin") {
-    setLocation("/dashboard");
+    setLocation("/hotel");
     return null;
   }
 
@@ -154,11 +154,12 @@ export default function AdminPortal() {
   const handleUserSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const hotelIdValue = formData.get("hotelId") as string;
     const data: any = {
       email: formData.get("email") as string,
       hotelName: formData.get("hotelName") as string,
       role: formData.get("role") as string,
-      hotelId: formData.get("hotelId") as string || null,
+      hotelId: hotelIdValue === "none" ? null : hotelIdValue,
     };
 
     // Only include password if provided
@@ -188,7 +189,7 @@ export default function AdminPortal() {
         </div>
         <Button
           variant="outline"
-          onClick={() => setLocation("/dashboard")}
+          onClick={() => setLocation("/hotel")}
           data-testid="button-back-to-dashboard"
         >
           Back to Dashboard
@@ -426,12 +427,12 @@ export default function AdminPortal() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="hotelId">Hotel</Label>
-                        <Select name="hotelId" defaultValue={editingUser?.hotelId || ""}>
+                        <Select name="hotelId" defaultValue={editingUser?.hotelId || "none"}>
                           <SelectTrigger data-testid="select-user-hotel">
                             <SelectValue placeholder="Select hotel (optional)" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
                             {Array.isArray(hotels) && hotels.map((hotel: any) => (
                               <SelectItem key={hotel.id} value={hotel.id}>
                                 {hotel.name}
