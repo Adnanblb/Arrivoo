@@ -90,3 +90,13 @@ Preferred communication style: Simple, everyday language.
 - **✅ Error Resolution**: Fixed "The endpoint has been disabled. Enable it using Neon API and retry" errors
 - **✅ Session Store**: Session management now works correctly with Replit database
 - **✅ Clean Logs**: All database connection errors eliminated from server logs
+
+#### Bug Fixes & Testing
+- **✅ Fixed Select Component**: Changed empty string value to "none" in hotel select dropdown (Radix UI requirement)
+- **✅ Fixed Routing**: Corrected AdminPortal redirect from /dashboard to /hotel for non-admin users
+- **✅ End-to-End Testing**: Comprehensive tests passed for all admin portal features:
+  - Admin login and routing to /admin portal
+  - Hotel CRUD operations (create, edit, delete)
+  - User CRUD operations (create, delete)
+  - Access control verification (hotel_staff blocked from /admin)
+  - Role-based routing working correctly
