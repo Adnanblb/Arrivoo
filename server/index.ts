@@ -18,7 +18,7 @@ app.use('/attached_assets', express.static(path.resolve(import.meta.dirname, '..
 // Set up PostgreSQL session store
 const PgSession = connectPgSimple(session);
 const pool = new pg.Pool({ 
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.SUPABASE_DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
