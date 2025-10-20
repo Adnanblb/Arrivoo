@@ -5,6 +5,7 @@ import { PmsFactory } from "./pms/pms-factory";
 import { PdfGenerator } from "./services/pdf-generator";
 import { registerAuthRoutes } from "./auth-routes";
 import { registerAdminRoutes } from "./admin-routes";
+import { registerUploadRoutes } from "./routes/upload";
 import {
   pmsLookupSchema,
   insertRegistrationContractSchema,
@@ -23,6 +24,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register admin routes
   registerAdminRoutes(app, storage);
+  
+  // Register upload routes
+  registerUploadRoutes(app);
   
   // PMS Lookup - Manual Check-in
   app.post("/api/pms/lookup", async (req, res) => {
