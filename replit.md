@@ -85,11 +85,11 @@ Preferred communication style: Simple, everyday language.
 - **✅ No Restrictions**: Hotels can now add as many reservations/arrivals as needed
 - **✅ Database Query**: Updated query to return all arrivals without artificial limits
 
-#### Fixed Database Connection Issue
-- **✅ Database Switch**: Switched from disabled Supabase/Neon endpoint to Replit's built-in PostgreSQL database
-- **✅ Error Resolution**: Fixed "The endpoint has been disabled. Enable it using Neon API and retry" errors
-- **✅ Session Store**: Session management now works correctly with Replit database
-- **✅ Clean Logs**: All database connection errors eliminated from server logs
+#### Database Configuration
+- **✅ Supabase Integration**: Application now uses Supabase PostgreSQL database exclusively
+- **✅ Database Connection**: Updated `server/db.ts` to use `SUPABASE_DATABASE_URL` environment variable
+- **✅ Schema Migration**: Successfully pushed all database tables and schemas to Supabase using Drizzle
+- **✅ Clean Slate**: Fresh Supabase database ready for production data
 
 #### Bug Fixes & Testing
 - **✅ Fixed Select Component**: Changed empty string value to "none" in hotel select dropdown (Radix UI requirement)
@@ -115,3 +115,14 @@ Preferred communication style: Simple, everyday language.
 - **✅ API Route**: Added `PUT /api/profile` endpoint for authenticated users to update their own profile
 - **✅ Navigation**: Added Profile button (user icon) to hotel dashboard header for easy access
 - **✅ Session Table**: Added session table to schema to prevent Drizzle from dropping it during migrations
+
+#### Guest Check-In Form Enhancements
+- **✅ Extended Guest Information**: Added comprehensive guest profile fields to check-in form:
+  - First Name, Last Name (separate fields for better data structure)
+  - Address (full address capture)
+  - Company (business information)
+  - VAT Number (tax documentation)
+- **✅ Registration Contracts**: Updated contracts table to store all new guest information fields
+- **✅ Tablet Signature Page**: Enhanced TabletSignature.tsx with input fields for all guest data
+- **✅ WebSocket Integration**: Updated contract_signed handler to process and save extended guest information
+- **✅ Storage Layer**: Modified updateContractSignature() to accept and persist all new guest fields
