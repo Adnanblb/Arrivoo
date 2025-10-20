@@ -12,6 +12,14 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("hotel_staff"), // admin, hotel_staff
   hotelId: varchar("hotel_id"),
   logoUrl: text("logo_url"), // Hotel logo URL
+  
+  // Profile fields
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  address: text("address"),
+  company: text("company"),
+  vatNumber: text("vat_number"),
+  
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -343,3 +351,12 @@ export const toggle2FASchema = z.object({
 });
 
 export type Toggle2FARequest = z.infer<typeof toggle2FASchema>;
+
+// Session table - managed by connect-pg-simple for Express sessions
+// This table is automatically created and managed by the connect-pg-simple library
+// We declare it here to prevent Drizzle from trying to drop it
+export const session = pgTable("session", {
+  sid: varchar("sid").primaryKey(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire").notNull(),
+});
