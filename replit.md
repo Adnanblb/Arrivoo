@@ -53,3 +53,18 @@ Preferred communication style: Simple, everyday language.
 **Session Management & Authentication:** `connect-pg-simple`, `Express-session`.
 
 **WebSocket & Real-time Communication:** Custom `useWebSocket` hook.
+
+## Recent Updates
+
+### October 20, 2025
+
+#### Removed Reservation Limit
+- **✅ Unlimited Arrivals**: Removed the 8 reservation limit from `getArrivalsByHotel` method
+- **✅ No Restrictions**: Hotels can now add as many reservations/arrivals as needed
+- **✅ Database Query**: Updated query to return all arrivals without artificial limits
+
+#### Fixed Database Connection Issue
+- **✅ Database Switch**: Switched from disabled Supabase/Neon endpoint to Replit's built-in PostgreSQL database
+- **✅ Error Resolution**: Fixed "The endpoint has been disabled. Enable it using Neon API and retry" errors
+- **✅ Session Store**: Session management now works correctly with Replit database
+- **✅ Clean Logs**: All database connection errors eliminated from server logs
