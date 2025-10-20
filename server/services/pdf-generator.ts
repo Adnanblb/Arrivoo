@@ -1,6 +1,8 @@
 import PDFDocument from "pdfkit";
 import type { RegistrationContract } from "@shared/schema";
 import type { Response } from "express";
+import { readFile } from "fs/promises";
+import { join } from "path";
 
 export class PdfGenerator {
   /**
@@ -13,14 +15,22 @@ export class PdfGenerator {
     hotelLogoUrl?: string,
     hotelName?: string
   ): Promise<void> {
-    // Fetch hotel logo if URL is provided
+    // Load hotel logo if URL is provided
     let logoBuffer: Buffer | null = null;
     if (hotelLogoUrl) {
       try {
-        const imageResponse = await fetch(hotelLogoUrl);
-        if (imageResponse.ok) {
-          const arrayBuffer = await imageResponse.arrayBuffer();
-          logoBuffer = Buffer.from(arrayBuffer);
+        // Check if it's a local file path
+        if (hotelLogoUrl.startsWith('/attached_assets/')) {
+          // Load from local file system
+          const filePath = join(process.cwd(), hotelLogoUrl);
+          logoBuffer = await readFile(filePath);
+        } else {
+          // Fetch from remote URL
+          const imageResponse = await fetch(hotelLogoUrl);
+          if (imageResponse.ok) {
+            const arrayBuffer = await imageResponse.arrayBuffer();
+            logoBuffer = Buffer.from(arrayBuffer);
+          }
         }
       } catch (error) {
         console.error("Error loading hotel logo:", error);
