@@ -209,18 +209,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Contract not found" });
       }
 
-      // Fetch hotel to get contract terms
+      // Fetch hotel to get contract terms, logo, and name
       let hotelTerms: string | undefined;
+      let hotelLogoUrl: string | undefined;
+      let hotelName: string | undefined;
       try {
         const hotel = await storage.getHotel(contract.hotelId);
         hotelTerms = hotel?.contractTerms || undefined;
+        hotelLogoUrl = hotel?.logoUrl || undefined;
+        hotelName = hotel?.name || undefined;
       } catch (error) {
-        console.error("Failed to fetch hotel terms:", error);
-        // Continue without terms if fetch fails
+        console.error("Failed to fetch hotel data:", error);
+        // Continue without hotel data if fetch fails
       }
 
       // Generate and stream PDF to response
-      await PdfGenerator.generateContractPdf(contract, res, hotelTerms);
+      await PdfGenerator.generateContractPdf(contract, res, hotelTerms, hotelLogoUrl, hotelName);
     } catch (error) {
       console.error("Generate PDF error:", error);
       if (!res.headersSent) {
