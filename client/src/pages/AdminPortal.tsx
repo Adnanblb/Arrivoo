@@ -161,6 +161,11 @@ export default function AdminPortal() {
       hotelName: formData.get("hotelName") as string,
       role: formData.get("role") as string,
       hotelId: hotelIdValue === "none" ? null : hotelIdValue,
+      firstName: formData.get("firstName") as string || null,
+      lastName: formData.get("lastName") as string || null,
+      address: formData.get("address") as string || null,
+      company: formData.get("company") as string || null,
+      vatNumber: formData.get("vatNumber") as string || null,
     };
 
     // Only include password if provided
@@ -394,6 +399,26 @@ export default function AdminPortal() {
                       <DialogTitle>{editingUser ? "Edit User" : "Add New User"}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleUserSubmit} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="firstName">First Name</Label>
+                          <Input
+                            id="firstName"
+                            name="firstName"
+                            defaultValue={editingUser?.firstName}
+                            data-testid="input-user-first-name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="lastName">Last Name</Label>
+                          <Input
+                            id="lastName"
+                            name="lastName"
+                            defaultValue={editingUser?.lastName}
+                            data-testid="input-user-last-name"
+                          />
+                        </div>
+                      </div>
                       <div className="space-y-2">
                         <Label htmlFor="user-email">Email</Label>
                         <Input
@@ -414,6 +439,35 @@ export default function AdminPortal() {
                           required={!editingUser}
                           data-testid="input-user-password"
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="address">Address</Label>
+                        <Input
+                          id="address"
+                          name="address"
+                          defaultValue={editingUser?.address}
+                          data-testid="input-user-address"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="company">Company</Label>
+                          <Input
+                            id="company"
+                            name="company"
+                            defaultValue={editingUser?.company}
+                            data-testid="input-user-company"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="vatNumber">VAT Number</Label>
+                          <Input
+                            id="vatNumber"
+                            name="vatNumber"
+                            defaultValue={editingUser?.vatNumber}
+                            data-testid="input-user-vat-number"
+                          />
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="hotelName">Hotel Name</Label>
@@ -481,24 +535,30 @@ export default function AdminPortal() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Company</TableHead>
                       <TableHead>Hotel Name</TableHead>
                       <TableHead>Role</TableHead>
-                      <TableHead>Hotel ID</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {Array.isArray(users) && users.map((userItem: any) => (
                       <TableRow key={userItem.id} data-testid={`row-user-${userItem.id}`}>
+                        <TableCell>
+                          {userItem.firstName || userItem.lastName 
+                            ? `${userItem.firstName || ''} ${userItem.lastName || ''}`.trim()
+                            : '-'}
+                        </TableCell>
                         <TableCell>{userItem.email}</TableCell>
+                        <TableCell>{userItem.company || "-"}</TableCell>
                         <TableCell>{userItem.hotelName}</TableCell>
                         <TableCell>
                           <span className={userItem.role === "admin" ? "font-semibold text-primary" : ""}>
                             {userItem.role}
                           </span>
                         </TableCell>
-                        <TableCell>{userItem.hotelId || "-"}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button
