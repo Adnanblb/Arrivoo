@@ -85,11 +85,21 @@ Preferred communication style: Simple, everyday language.
 - **✅ No Restrictions**: Hotels can now add as many reservations/arrivals as needed
 - **✅ Database Query**: Updated query to return all arrivals without artificial limits
 
-#### Database Configuration
+#### Database Migration to Supabase
 - **✅ Supabase Integration**: Application now uses Supabase PostgreSQL database exclusively
 - **✅ Database Connection**: Updated `server/db.ts` to use `SUPABASE_DATABASE_URL` environment variable
 - **✅ Schema Migration**: Successfully pushed all database tables and schemas to Supabase using Drizzle
-- **✅ Clean Slate**: Fresh Supabase database ready for production data
+- **✅ Data Migration**: Created and executed migration script to transfer all data from Replit to Supabase
+  - 6 users (including admin account with emails and hashed passwords)
+  - 7 hotels with complete configurations
+  - 863 arrivals/reservations
+  - 27 registration contracts
+  - 20 registered devices (tablets)
+  - 6 PMS configurations
+  - 52 login history records
+  - 14 OTP codes
+- **✅ Login Preservation**: All user credentials (emails and passwords) successfully transferred - users can log in normally from any host
+- **✅ Production Ready**: Full application data now hosted in Supabase for multi-host deployment
 
 #### Bug Fixes & Testing
 - **✅ Fixed Select Component**: Changed empty string value to "none" in hotel select dropdown (Radix UI requirement)
